@@ -15,4 +15,4 @@ LATEST_FILE=$(ls -t ./alembic/versions/*.py | head -n 1)
 NEW_NAME="./alembic/versions/${NEXT}_${MIGRATION_NAME}.py"
 mv "$LATEST_FILE" "$NEW_NAME"
 
-echo "Created alembic migration $NEW_NAME"
+echo "Created alembic migration ${NEXT}_$NEW_NAME"

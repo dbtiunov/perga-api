@@ -1,13 +1,17 @@
 # Perga API
 
-Perga API is an open-source personal organizer that helps you plan and organize your days and months efficiently.
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11-blue.svg)
+![Build](https://github.com/dbtiunov/perga-api/actions/workflows/ci.yml/badge.svg)
+
+Personal organizer that helps you plan and organize your days and months efficiently.
 
 ## Features
 
-- User authentication with JWT tokens
-- Daily planner management
-- Monthly agenda management
+- Daily planner
+- Monthly agenda and backlog
 - RESTful API with FastAPI
+- User authentication with JWT tokens
 - Comprehensive documentation with Swagger UI
 
 ## Tech Stack
@@ -54,7 +58,7 @@ Perga API is an open-source personal organizer that helps you plan and organize 
 5. Update the `.env` file with your specific configuration:
    - Set a secure `SECRET_KEY`
    - Configure PostgreSQL connection details
-   - Set `CORS_ORIGINS` if needed
+   - Set `CORS_ORIGINS`
 
 6. Run database migrations:
    ```bash
@@ -143,9 +147,8 @@ python -m pytest app/tests/test_services/test_user_service.py
 Create a new migration:
 
 ```bash
-alembic revision --autogenerate -m "description of changes"
+./scripts/create_migration.sh <migration_name>
 ```
-Add a numerical prefix to the created migration file, so it follows the format: 0001_<migration_id>_<migration_description>.py
 
 Apply migrations:
 
