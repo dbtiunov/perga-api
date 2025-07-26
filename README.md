@@ -46,9 +46,9 @@ Perga API is an open-source personal organizer that helps you plan and organize 
    pip install -r requirements.txt
    ```
 
-4. Create a `.env` file based on `.env-example`:
+4. Create a `.env` file based on `.env.example`:
    ```bash
-   cp .env-example .env
+   cp .env.example .env
    ```
 
 5. Update the `.env` file with your specific configuration:
@@ -145,6 +145,7 @@ Create a new migration:
 ```bash
 alembic revision --autogenerate -m "description of changes"
 ```
+Add a numerical prefix to the created migration file, so it follows the format: 0001_<migration_id>_<migration_description>.py
 
 Apply migrations:
 
