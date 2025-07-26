@@ -1,7 +1,6 @@
 import logging
 
 from pydantic_settings import BaseSettings
-from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -14,15 +13,15 @@ class Settings(BaseSettings):
     IS_DEV: bool = True
     LOGGING_LEVEL: int = logging.INFO
 
-    POSTGRES_HOST: Optional[str] = None
-    POSTGRES_USER: Optional[str] = None
-    POSTGRES_PASSWORD: Optional[str] = None
-    POSTGRES_DB: Optional[str] = None
+    POSTGRES_HOST: str | None = None
+    POSTGRES_USER: str | None = None
+    POSTGRES_PASSWORD: str | None = None
+    POSTGRES_DB: str | None = None
 
-    ROOT_URL_REDIRECT: Optional[str] = None
+    ROOT_URL_REDIRECT: str | None = None
 
     @property
-    def SQLALCHEMY_DATABASE_URI(self) -> str:
+    def sqlalchemy_database_uri(self) -> str:
         return f'postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}/{self.POSTGRES_DB}'
 
     class Config:

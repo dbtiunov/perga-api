@@ -1,7 +1,6 @@
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List, Dict
 
 from app.services.auth_service import AuthService
 from app.core.database import get_db
@@ -17,7 +16,7 @@ from app.schemas.user import User
 router = APIRouter()
 
 
-@router.get("/", response_model=List[PlannerAgenda])
+@router.get("/", response_model=list[PlannerAgenda])
 def get_planner_agendas_by_day(
     day: date,
     db: Session = Depends(get_db),
@@ -29,7 +28,7 @@ def get_planner_agendas_by_day(
 
 @router.post("/", response_model=PlannerAgenda)
 def create_planner_agenda(
-    agenda_item: PlannerAgendaCreate, 
+    agenda_item: PlannerAgendaCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
@@ -39,8 +38,8 @@ def create_planner_agenda(
 
 @router.put("/{agenda_id}/", response_model=PlannerAgenda)
 def update_planner_agenda(
-    agenda_id: int, 
-    agenda_item: PlannerAgendaUpdate, 
+    agenda_id: int,
+    agenda_item: PlannerAgendaUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
@@ -50,13 +49,15 @@ def update_planner_agenda(
         raise HTTPException(status_code=404, detail="Planner agenda not found")
 
     # Then update it
-    db_agenda = PlannerAgendaService.update_planner_agenda(db, agenda_id=agenda_id, agenda_item=agenda_item, user_id=current_user.id)
+    db_agenda = PlannerAgendaService.update_planner_agenda(
+        db, agenda_id=agenda_id, agenda_item=agenda_item, user_id=current_user.id
+    )
     return db_agenda
 
 
 @router.delete("/{agenda_id}/", response_model=dict)
 def delete_planner_agenda(
-    agenda_id: int, 
+    agenda_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
@@ -94,7 +95,7 @@ def reorder_agendas(
 # Item routes
 @router.post("/items/", response_model=PlannerAgendaItem)
 def create_planner_agenda_item(
-    item: PlannerAgendaItemCreate, 
+    item: PlannerAgendaItemCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
@@ -108,8 +109,8 @@ def create_planner_agenda_item(
 
 @router.put("/items/{item_id}/", response_model=PlannerAgendaItem)
 def update_planner_agenda_item(
-    item_id: int, 
-    item: PlannerAgendaItemUpdate, 
+    item_id: int,
+    item: PlannerAgendaItemUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
@@ -131,7 +132,7 @@ def update_planner_agenda_item(
 
 @router.delete("/items/{item_id}/", response_model=dict)
 def delete_planner_agenda_item(
-    item_id: int, 
+    item_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
@@ -166,9 +167,9 @@ def reorder_agenda_items(
     return {"detail": "Agenda items reordered successfully"}
 
 
-@router.get("/items/", response_model=Dict[int, List[PlannerAgendaItem]])
+@router.get("/items/", response_model=dict[int, list[PlannerAgendaItem]])
 def get_planner_items_by_agendas(
-    agenda_ids: List[int] = Query(..., description="List of agenda IDs"),
+    agenda_ids: list[int] = Query(..., description="List of agenda IDs"),
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):

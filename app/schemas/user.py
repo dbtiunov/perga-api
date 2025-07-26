@@ -1,4 +1,3 @@
-from typing import Optional
 from pydantic import BaseModel
 
 from app.models.choices import WeekStartDay
@@ -21,7 +20,7 @@ class UserCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    username: Optional[str] = None
-    email: Optional[str] = None
-    password: Optional[str] = None
-    week_start_day: Optional[WeekStartDay] = None
+    username: str | None = None
+    email: str | None = None
+    password: str | None = None
+    week_start_day: WeekStartDay | None = None

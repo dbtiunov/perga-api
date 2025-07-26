@@ -1,4 +1,4 @@
-from typing import Type, Generic, TypeVar
+from typing import Generic, TypeVar
 
 from sqlalchemy.orm import Session, Query
 
@@ -9,7 +9,7 @@ T = TypeVar("T", bound=BaseModel)
 
 
 class BaseService(Generic[T]):
-    model: Type[T]
+    model: type[T]
 
     @classmethod
     def get_base_query(cls, db: Session) -> Query:

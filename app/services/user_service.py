@@ -1,6 +1,5 @@
 from enum import Enum
 from sqlalchemy.orm import Session
-from typing import Optional
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
@@ -12,15 +11,15 @@ class UserService(BaseService[User]):
     model = User
 
     @classmethod
-    def get_user_by_email(cls, db: Session, email: str) -> Optional[User]:
+    def get_user_by_email(cls, db: Session, email: str) -> User | None:
         return cls.get_base_query(db).filter(User.email == email).first()
 
     @classmethod
-    def get_user_by_username(cls, db: Session, username: str) -> Optional[User]:
+    def get_user_by_username(cls, db: Session, username: str) -> User | None:
         return cls.get_base_query(db).filter(User.username == username).first()
 
     @classmethod
-    def get_user_by_id(cls, db: Session, user_id: int) -> Optional[User]:
+    def get_user_by_id(cls, db: Session, user_id: int) -> User | None:
         return cls.get_base_query(db).filter(User.id == user_id).first()
 
     @classmethod
@@ -47,7 +46,7 @@ class UserService(BaseService[User]):
         return db_user
 
     @classmethod
-    def update_user(cls, db: Session, user_id: int, user_in: UserUpdate) -> Optional[User]:
+    def update_user(cls, db: Session, user_id: int, user_in: UserUpdate) -> User | None:
         db_user = cls.get_user_by_id(db, user_id)
         if not db_user:
             return None

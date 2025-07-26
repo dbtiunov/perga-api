@@ -3,7 +3,6 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-from typing import Optional
 
 from app.core.database import get_db
 from app.models.user import User
@@ -15,12 +14,12 @@ from app.services.auth_utils import (
 )
 
 # OAuth2 scheme for token authentication
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/api/v1/auth/access_token/")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/access_token/")
 
 
 class AuthService:
     @classmethod
-    def authenticate_user(cls, db: Session, username: str, password: str) -> Optional[User]:
+    def authenticate_user(cls, db: Session, username: str, password: str) -> User | None:
         user = UserService.get_user_by_username(db, username)
         if not user or not verify_password(password, user.hashed_password):
             return None
@@ -46,7 +45,7 @@ class AuthService:
         }
 
     @classmethod
-    def validate_refresh_token(cls, db: Session, refresh_token: str) -> Optional[User]:
+    def validate_refresh_token(cls, db: Session, refresh_token: str) -> User | None:
         """ Validate a refresh token and return the associated user """
         try:
             # Decode the refresh token

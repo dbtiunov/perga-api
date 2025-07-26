@@ -1,6 +1,6 @@
+import json
 import os
 import pytest
-import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -30,7 +30,7 @@ def test_db():
     Base.metadata.create_all(bind=engine)
 
     # Create a new session for testing
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)  # noqa: N806
     db = TestingSessionLocal()
 
     try:

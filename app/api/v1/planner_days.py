@@ -1,7 +1,6 @@
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List, Dict
 
 from app.core.database import get_db
 from app.schemas.planner_day import (
@@ -15,9 +14,9 @@ from app.schemas.user import User
 router = APIRouter()
 
 
-@router.get("/items/", response_model=Dict[str, List[PlannerDayItem]])
+@router.get("/items/", response_model=dict[str, list[PlannerDayItem]])
 def get_items_by_days(
-    days: List[date] = Query(..., description="List of dates in ISO format (YYYY-MM-DD)"),
+    days: list[date] = Query(..., description="List of dates in ISO format (YYYY-MM-DD)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
@@ -35,7 +34,7 @@ def get_items_by_days(
 
 @router.post("/items/", response_model=PlannerDayItem)
 def create_day_item(
-    item: PlannerDayItemCreate, 
+    item: PlannerDayItemCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
@@ -44,8 +43,8 @@ def create_day_item(
 
 @router.put("/items/{item_id}/", response_model=PlannerDayItem)
 def update_day_item(
-    item_id: int, 
-    item: PlannerDayItemUpdate, 
+    item_id: int,
+    item: PlannerDayItemUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
@@ -60,7 +59,7 @@ def update_day_item(
 
 @router.delete("/items/{item_id}/", response_model=dict)
 def delete_day_item(
-    item_id: int, 
+    item_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
@@ -85,7 +84,7 @@ def reorder_day_items(
     for item_id in request.ordered_item_ids:
         db_item = PlannerDayItemService.get_day_item(db, item_id=item_id, user_id=current_user.id)
         if not db_item:
-            raise HTTPException(status_code=404, detail=f"One of the items was not found")
+            raise HTTPException(status_code=404, detail="One of the items was not found")
 
     success = PlannerDayItemService.reorder_day_items(db, request.ordered_item_ids, user_id=current_user.id)
     if not success:

@@ -1,0 +1,38 @@
+# Source directories to lint
+src = ["app"]
+
+# Maximum allowed line length
+line-length = 120
+
+# Target Python version
+target-version = "py310"
+
+# Enabled rule categories
+lint.select = [
+  "F",     # Pyflakes (errors and potential bugs)
+  "E",     # pycodestyle (style violations)
+  "W",     # pycodestyle (warnings)
+  "I",     # isort (import sorting)
+  "UP",    # pyupgrade (syntax modernization)
+  "N",     # pep8-naming (naming conventions)
+]
+
+lint.ignore = [
+  "W293",  # Blank line contains whitespace
+  "I001",  # Import block is un-sorted or un-formatted
+  "N818",  # Exception should be named with an Error suffix
+]
+
+exclude = [
+    "alembic",
+]
+
+# File-specific rule overrides
+[lint.per-file-ignores]
+# Allow wildcard imports in models/__init__.py
+"app/models/__init__.py" = ["F403"]
+
+# Optional: configure isort behavior
+[lint.isort]
+known-first-party = ["app"]
+combine-as-imports = true

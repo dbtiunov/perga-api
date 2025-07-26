@@ -9,7 +9,7 @@ from app.schemas.user import User
 from app.services.user_service import UserService
 from app.services.auth_utils import SECRET_KEY, ALGORITHM
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"/api/v1/auth/token/")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token/")
 
 
 async def get_current_user_from_token(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:

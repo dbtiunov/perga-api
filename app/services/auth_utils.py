@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 from jose import jwt
 from passlib import exc as passlib_exc
@@ -31,7 +30,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return result
 
 
-def create_token(data: dict, expires_delta: Optional[timedelta] = None, token_type: str = "access") -> str:
+def create_token(data: dict, expires_delta: timedelta | None = None, token_type: str = "access") -> str:
     """
     Create a JWT token (access or refresh)
 
@@ -65,11 +64,11 @@ def create_token(data: dict, expires_delta: Optional[timedelta] = None, token_ty
     return encoded_jwt
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """ Create an access token with default expiration of ACCESS_TOKEN_EXPIRE_MINUTES """
     return create_token(data, expires_delta, token_type="access")
 
 
-def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_refresh_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """ Create a refresh token with default expiration of REFRESH_TOKEN_EXPIRE_DAYS """
     return create_token(data, expires_delta, token_type="refresh")

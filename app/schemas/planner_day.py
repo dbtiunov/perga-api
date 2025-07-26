@@ -1,5 +1,4 @@
-from datetime import datetime, date
-from typing import Optional, List
+from datetime import date
 from pydantic import BaseModel
 
 from app.models.choices import PlannerItemState
@@ -26,18 +25,9 @@ class PlannerDayItemCreate(BaseModel):
 
 
 class PlannerDayItemUpdate(BaseModel):
-    day: Optional[date] = None
-    text: Optional[str] = None
-    state: Optional[PlannerItemState] = None
-
-
-# class PlannerDayItemInDBBase(PlannerDayItemBase):
-#     id: int
-#     created_dt: datetime
-#     updated_dt: datetime
-#
-#     class Config:
-#         from_attributes = True
+    day: date | None = None
+    text: str | None = None
+    state: PlannerItemState | None = None
 
 
 class PlannerDayItem(BaseModel):
@@ -48,7 +38,7 @@ class PlannerDayItem(BaseModel):
 
 
 class ReorderDayItemsRequest(BaseModel):
-    ordered_item_ids: List[int]
+    ordered_item_ids: int | None
 
 
 class CopyDayItemRequest(BaseModel):

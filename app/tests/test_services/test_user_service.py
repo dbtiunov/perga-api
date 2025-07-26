@@ -2,8 +2,8 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.schemas.user import UserCreate, UserUpdate
-from app.services.user_service import UserService
 from app.services.auth_utils import verify_password
+from app.services.user_service import UserService
 
 
 class TestUserService:

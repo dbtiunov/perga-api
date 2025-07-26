@@ -1,7 +1,6 @@
 import logging
 from enum import Enum
 from sqlalchemy.orm import Session
-from typing import List, Optional
 
 from app.core.db_utils import atomic_transaction, TransactionRollback
 from app.models.planner import PlannerAgendaItem
@@ -24,7 +23,7 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
         return max_index.index + 1 if max_index else 0
 
     @classmethod
-    def get_planner_item(cls, db: Session, item_id: int, user_id: int) -> Optional[PlannerAgendaItem]:
+    def get_planner_item(cls, db: Session, item_id: int, user_id: int) -> PlannerAgendaItem | None:
         query = cls.get_base_query(db).filter(
             PlannerAgendaItem.user_id == user_id,
             PlannerAgendaItem.id == item_id
@@ -32,7 +31,7 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
         return query.first()
 
     @classmethod
-    def get_planner_items_by_agendas(cls, db: Session, agenda_id: int, user_id: int) -> List[PlannerAgendaItem]:
+    def get_planner_items_by_agendas(cls, db: Session, agenda_id: int, user_id: int) -> PlannerAgendaItem | None:
         query = cls.get_base_query(db).filter(
             PlannerAgendaItem.user_id == user_id,
             PlannerAgendaItem.agenda_id == agenda_id
@@ -51,7 +50,9 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
         return db_item
 
     @classmethod
-    def update_planner_item(cls, db: Session, item_id: int, item: PlannerAgendaItemUpdate, user_id: int) -> Optional[PlannerAgendaItem]:
+    def update_planner_item(
+        cls, db: Session, item_id: int, item: PlannerAgendaItemUpdate, user_id: int
+    ) -> PlannerAgendaItem | None:
         db_item = cls.get_planner_item(db, item_id, user_id)
         if not db_item:
             return None

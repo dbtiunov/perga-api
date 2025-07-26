@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime, date
 from sqlalchemy.orm import Session
-from typing import List, Optional
 
 from app.core.db_utils import atomic_transaction, TransactionRollback
 from app.models.choices import PlannerAgendaType
@@ -22,7 +21,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
         return max_index_agenda.index + 1 if max_index_agenda else 0
 
     @classmethod
-    def get_planner_agenda(cls, db: Session, agenda_id: int, user_id: int) -> Optional[PlannerAgenda]:
+    def get_planner_agenda(cls, db: Session, agenda_id: int, user_id: int) -> PlannerAgenda | None:
         query = cls.get_base_query(db).filter(
             PlannerAgenda.user_id == user_id,
             PlannerAgenda.id == agenda_id
@@ -30,7 +29,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
         return query.first()
 
     @classmethod
-    def get_planner_agendas_by_day(cls, db: Session, user_id: int, day: date) -> List[PlannerAgenda]:
+    def get_planner_agendas_by_day(cls, db: Session, user_id: int, day: date) -> PlannerAgenda | None:
         base_query = cls.get_base_query(db).filter(PlannerAgenda.user_id == user_id)
 
         # Check if "Backlog" agenda exists for this user
@@ -85,7 +84,9 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
         return db_agenda
 
     @classmethod
-    def update_planner_agenda(cls, db: Session, agenda_id: int, agenda_item: PlannerAgendaUpdate, user_id: int) -> Optional[PlannerAgenda]:
+    def update_planner_agenda(
+        cls, db: Session, agenda_id: int, agenda_item: PlannerAgendaUpdate, user_id: int
+    ) -> PlannerAgenda | None:
         db_agenda = cls.get_planner_agenda(db, agenda_id, user_id)
         if not db_agenda:
             return None

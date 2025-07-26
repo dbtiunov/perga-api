@@ -1,6 +1,6 @@
+from collections.abc import Generator
 from contextlib import contextmanager
 from sqlalchemy.orm import Session
-from typing import Generator
 
 
 class TransactionRollback(Exception):
