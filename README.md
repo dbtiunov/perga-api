@@ -1,7 +1,7 @@
 # Perga API
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.11-blue.svg)
+![Python](https://img.shields.io/badge/python-3.10-blue.svg)
 ![Build](https://github.com/dbtiunov/perga-api/actions/workflows/ci.yml/badge.svg)
 
 Personal organizer that helps you plan and organize your days and months efficiently.
