@@ -48,5 +48,4 @@ jobs:
           pytest
 
       - name: Run linter (ruff)
-        run: |
-          ruff . --output-format=github
+        run: ruff check --output-format=github .
