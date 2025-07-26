@@ -9,10 +9,10 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     
+    SECRET_KEY: str
+    CORS_ORIGINS: list[str]
     IS_DEV: bool = True
-    SECRET_KEY: str = 'your-secret-key'
     LOGGING_LEVEL: int = logging.INFO
-    CORS_ORIGINS: list[str] = ['*']
 
     POSTGRES_HOST: Optional[str] = None
     POSTGRES_USER: Optional[str] = None
