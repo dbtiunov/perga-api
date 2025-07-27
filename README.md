@@ -6,6 +6,11 @@
 
 Personal organizer that helps you plan and organize your days and months efficiently.
 
+## Overview
+
+**Perga API** is the core of the product.  
+**[Perga Web](https://github.com/dbtiunov/perga-web)** is a standalone **browser client** that connects to the backend to provide a user-friendly web interface.
+
 ## Features
 
 - Daily planner
