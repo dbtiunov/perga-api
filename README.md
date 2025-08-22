@@ -19,6 +19,12 @@ Personal organizer that helps you plan and organize your days and months efficie
 - User authentication with JWT tokens
 - Comprehensive documentation with Swagger UI
 
+<p>
+  <img src="docs/assets/api_screenshot.png" alt="API Screenshot" width="300" />
+  <span>&nbsp;&nbsp;&nbsp;</span>
+  <img src="docs/assets/planner_screenshot.png" alt="Planner Screenshot" width="300" />
+</p>
+
 ## Demo
 
 You can try out Perga without installation by visiting demo version at [https://demo.getperga.me/](https://demo.getperga.me/).
