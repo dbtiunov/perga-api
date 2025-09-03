@@ -38,7 +38,7 @@ class PlannerDayItem(BaseModel):
 
 
 class ReorderDayItemsRequest(BaseModel):
-    ordered_item_ids: int | None
+    ordered_item_ids: list[int]
 
 
 class CopyDayItemRequest(BaseModel):
