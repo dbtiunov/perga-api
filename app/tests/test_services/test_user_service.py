@@ -121,13 +121,13 @@ class TestUserService:
         db_user = UserService.update_user(test_db, 999, user_update)
         assert db_user is None
 
-    def test_update_user_password(self, test_db: Session, test_user):
-        """Test that update_user updates a user's password correctly"""
-        # Update the user's password
-        user_update = UserUpdate(
-            password="newpassword123"
-        )
-        db_user = UserService.update_user(test_db, test_user.id, user_update)
-        
-        # Check that the password was updated correctly
+    def test_change_password(self, test_db: Session, test_user):
+        """Test that change_password updates a user's password after verifying current password"""
+        # Change the user's password with correct current_password
+        db_user = UserService.change_password(test_db, test_user.id, current_password="password123", new_password="newpassword123")
         assert verify_password("newpassword123", db_user.hashed_password)
+
+        # Attempt to change with wrong current password
+        with pytest.raises(ValueError) as excinfo:
+            UserService.change_password(test_db, test_user.id, current_password="wrong", new_password="another")
+        assert "Incorrect current password" in str(excinfo.value)
