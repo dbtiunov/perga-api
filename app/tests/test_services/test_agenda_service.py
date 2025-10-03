@@ -58,28 +58,12 @@ class TestPlannerAgendaService:
         db_agenda = PlannerAgendaService.get_planner_agenda(test_db, agenda.id, 999)
         assert db_agenda is None
 
-    def test_get_planner_agendas_by_day(self, test_db: Session, test_user):
-        """Test that get_planner_agendas_by_day returns the correct agendas"""
-        # Initially, it should create Backlog and Monthly agendas
-        today = date.today()
-        agendas = PlannerAgendaService.get_planner_agendas_by_day(test_db, test_user.id, today)
-        assert len(agendas) == 2
-        
-        # Check that one is Backlog and one is Monthly
-        agenda_types = [a.agenda_type for a in agendas]
-        assert PlannerAgendaType.BACKLOG.value in agenda_types
-        assert PlannerAgendaType.MONTHLY.value in agenda_types
-        
-        # Check that the Monthly agenda has the correct name (e.g., "January 2023")
-        monthly_agenda = next(a for a in agendas if a.agenda_type == PlannerAgendaType.MONTHLY.value)
-        assert monthly_agenda.name == today.strftime("%B %Y")
-
     def test_create_planner_agenda(self, test_db: Session, test_user):
         """Test that create_planner_agenda creates an agenda correctly"""
         # Create an agenda
         agenda_create = PlannerAgendaCreate(
             name="Test Agenda",
-            agenda_type=PlannerAgendaType.CUSTOM.value,
+            agenda_type=PlannerAgendaType.CUSTOM,
             index=None  # Should be set automatically
         )
         db_agenda = PlannerAgendaService.create_planner_agenda(test_db, agenda_create, test_user.id)

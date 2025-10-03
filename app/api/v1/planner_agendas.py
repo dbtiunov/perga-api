@@ -2,6 +2,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.models.choices import PlannerAgendaType
 from app.services.auth_service import AuthService
 from app.core.database import get_db
 from app.schemas.planner_agenda import (
@@ -17,12 +18,16 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[PlannerAgenda])
-def get_planner_agendas_by_day(
-    day: date,
+def get_agendas(
+    agenda_types: list[PlannerAgendaType] | None = Query(None,description="Agenda types to include: monthly, backlog, custom"),
+    day: date | None = Query(None, description="Reference day to resolve monthly agenda (defaults to today)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
-    agendas = PlannerAgendaService.get_planner_agendas_by_day(db, user_id=current_user.id, day=day)
+    if not agenda_types:
+        agenda_types = [PlannerAgendaType.MONTHLY, PlannerAgendaType.BACKLOG]
+
+    agendas = PlannerAgendaService.get_planner_agendas(db, current_user.id, agenda_types, day)
     return agendas
 
 
@@ -32,8 +37,8 @@ def create_planner_agenda(
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
-    agenda_item.user_id = current_user.id
-    return PlannerAgendaService.create_planner_agenda(db=db, agenda_item=agenda_item, user_id=current_user.id)
+    db_agenda = PlannerAgendaService.create_planner_agenda(db=db, agenda_item=agenda_item, user_id=current_user.id)
+    return db_agenda
 
 
 @router.put("/{agenda_id}/", response_model=PlannerAgenda)

@@ -1,5 +1,7 @@
 import logging
 from datetime import datetime, date
+
+from sqlalchemy import or_, and_
 from sqlalchemy.orm import Session
 
 from app.core.db_utils import atomic_transaction, TransactionRollback
@@ -15,6 +17,60 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
     model = PlannerAgenda
 
     @classmethod
+    def get_planner_agendas(
+        cls, db: Session, user_id: int, agenda_types: list[PlannerAgendaType], day: date | None = None
+    ) -> list[PlannerAgenda]:
+        base_query = cls.get_base_query(db).filter(PlannerAgenda.user_id == user_id)
+
+        filters = []
+        if PlannerAgendaType.MONTHLY in agenda_types:
+            if not day:
+                day = datetime.today()
+
+            monthly_name = day.strftime("%B %Y")
+            monthly_agenda = base_query.filter(
+                PlannerAgenda.name == monthly_name,
+                PlannerAgenda.agenda_type == PlannerAgendaType.MONTHLY.value
+            ).first()
+
+            # If month agenda doesn't exist for this user, create it
+            if not monthly_agenda:
+                monthly_agenda_create = PlannerAgendaCreate(
+                    name=monthly_name,
+                    agenda_type=PlannerAgendaType.MONTHLY,
+                    index=0
+                )
+                cls.create_planner_agenda(db, monthly_agenda_create, user_id)
+
+            filters.append(
+                and_(
+                    PlannerAgenda.agenda_type == PlannerAgendaType.MONTHLY.value,
+                    PlannerAgenda.name == monthly_name
+                )
+            )
+
+        if PlannerAgendaType.CUSTOM in agenda_types:
+            filters.append(PlannerAgenda.agenda_type == PlannerAgendaType.CUSTOM.value)
+
+        if PlannerAgendaType.BACKLOG in agenda_types:
+            # Ensure Backlog agenda exists
+            backlog_agenda = base_query.filter(PlannerAgenda.agenda_type == PlannerAgendaType.BACKLOG.value).first()
+            if not backlog_agenda:
+                backlog_agenda_create = PlannerAgendaCreate(
+                    name="Backlog",
+                    agenda_type=PlannerAgendaType.BACKLOG,
+                    index=1
+                )
+                cls.create_planner_agenda(db, backlog_agenda_create, user_id)
+
+            filters.append(PlannerAgenda.agenda_type == PlannerAgendaType.BACKLOG.value)
+
+        if filters:
+            base_query = base_query.filter(or_(*filters))
+
+        return base_query.order_by(PlannerAgenda.index).all()
+
+    @classmethod
     def get_new_agenda_index(cls, db: Session, user_id) -> int:
         query = cls.get_base_query(db).filter(PlannerAgenda.user_id == user_id)
         max_index_agenda = query.order_by(PlannerAgenda.index.desc()).first()
@@ -27,49 +83,6 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
             PlannerAgenda.id == agenda_id
         )
         return query.first()
-
-    @classmethod
-    def get_planner_agendas_by_day(cls, db: Session, user_id: int, day: date) -> PlannerAgenda | None:
-        base_query = cls.get_base_query(db).filter(PlannerAgenda.user_id == user_id)
-
-        # Check if "Backlog" agenda exists for this user
-        backlog_agenda = base_query.filter(
-            PlannerAgenda.agenda_type == PlannerAgendaType.BACKLOG.value
-        ).first()
-
-        # If "Backlog" agenda doesn't exist for this user, create it
-        if not backlog_agenda:
-            from app.schemas.planner_agenda import PlannerAgendaCreate
-            backlog_agenda_create = PlannerAgendaCreate(
-                name="Backlog",
-                agenda_type=PlannerAgendaType.BACKLOG.value,
-                index=1
-            )
-            cls.create_planner_agenda(db, backlog_agenda_create, user_id)
-
-        if not day:
-            day = datetime.now()
-
-        monthly_name = day.strftime("%B %Y")
-        monthly_agenda = base_query.filter(
-            PlannerAgenda.name == monthly_name,
-            PlannerAgenda.agenda_type == PlannerAgendaType.MONTHLY.value
-        ).first()
-
-        # If month agenda doesn't exist for this user, create it
-        if not monthly_agenda:
-            from app.schemas.planner_agenda import PlannerAgendaCreate
-            monthly_agenda_create = PlannerAgendaCreate(
-                name=monthly_name,
-                agenda_type=PlannerAgendaType.MONTHLY.value,
-                index=0
-            )
-            cls.create_planner_agenda(db, monthly_agenda_create, user_id)
-
-        return base_query.filter(
-            (PlannerAgenda.agenda_type == PlannerAgendaType.BACKLOG.value) |
-            ((PlannerAgenda.agenda_type == PlannerAgendaType.MONTHLY.value) & (PlannerAgenda.name == monthly_name))
-        ).order_by(PlannerAgenda.index).all()
 
     @classmethod
     def create_planner_agenda(cls, db: Session, agenda_item: PlannerAgendaCreate, user_id: int) -> PlannerAgenda:
