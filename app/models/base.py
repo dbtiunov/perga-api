@@ -7,9 +7,11 @@ class BaseModel(Base):
     __abstract__ = True
 
     id = Column(Integer, primary_key=True, index=True)
-    created_dt = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_dt = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_dt = Column(
-        DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
     )
 
     is_archived = Column(Boolean, default=False)
