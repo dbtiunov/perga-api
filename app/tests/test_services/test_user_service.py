@@ -124,7 +124,12 @@ class TestUserService:
     def test_change_password(self, test_db: Session, test_user):
         """Test that change_password updates a user's password after verifying current password"""
         # Change the user's password with correct current_password
-        db_user = UserService.change_password(test_db, test_user.id, current_password="password123", new_password="newpassword123")
+        db_user = UserService.change_password(
+            test_db,
+            test_user.id,
+            current_password="password123",
+            new_password="newpassword123"
+        )
         assert verify_password("newpassword123", db_user.hashed_password)
 
         # Attempt to change with wrong current password

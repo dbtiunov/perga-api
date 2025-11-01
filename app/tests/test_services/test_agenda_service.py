@@ -1,6 +1,6 @@
-from datetime import date
 from sqlalchemy.orm import Session
 
+from app import const
 from app.models.choices import PlannerAgendaType
 from app.models.planner import PlannerAgenda
 from app.schemas.planner_agenda import PlannerAgendaCreate, PlannerAgendaUpdate
@@ -12,30 +12,30 @@ class TestPlannerAgendaService:
 
     def test_get_new_agenda_index(self, test_db: Session, test_user):
         """Test that get_new_agenda_index returns the correct index"""
-        # When there are no agendas, index should be 0
+        # When there are no agendas, index should be 1
         index = PlannerAgendaService.get_new_agenda_index(test_db, test_user.id)
-        assert index == 0
+        assert index == const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
 
-        # Create an agenda with index 0
+        # Create an agenda with index 1
         agenda = PlannerAgenda(
             name="Test Agenda",
-            index=0,
+            index=index,
             agenda_type=PlannerAgendaType.CUSTOM.value,
             user_id=test_user.id
         )
         test_db.add(agenda)
         test_db.commit()
 
-        # Now index should be 1
+        # Now index should be 2
         index = PlannerAgendaService.get_new_agenda_index(test_db, test_user.id)
-        assert index == 1
+        assert index == 2
 
     def test_get_planner_agenda(self, test_db: Session, test_user):
         """Test that get_planner_agenda returns the correct agenda"""
         # Create an agenda
         agenda = PlannerAgenda(
             name="Test Agenda",
-            index=0,
+            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
             agenda_type=PlannerAgendaType.CUSTOM.value,
             user_id=test_user.id
         )
@@ -72,7 +72,7 @@ class TestPlannerAgendaService:
         assert db_agenda.id is not None
         assert db_agenda.name == "Test Agenda"
         assert db_agenda.agenda_type == PlannerAgendaType.CUSTOM.value
-        assert db_agenda.index == 0  # Should be the first agenda
+        assert db_agenda.index == const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
         assert db_agenda.user_id == test_user.id
 
     def test_update_planner_agenda(self, test_db: Session, test_user):
@@ -80,7 +80,7 @@ class TestPlannerAgendaService:
         # Create an agenda
         agenda = PlannerAgenda(
             name="Test Agenda",
-            index=0,
+            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
             agenda_type=PlannerAgendaType.CUSTOM.value,
             user_id=test_user.id
         )
@@ -112,7 +112,7 @@ class TestPlannerAgendaService:
         # Create an agenda
         agenda = PlannerAgenda(
             name="Test Agenda",
-            index=0,
+            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
             agenda_type=PlannerAgendaType.CUSTOM.value,
             user_id=test_user.id
         )
@@ -142,19 +142,19 @@ class TestPlannerAgendaService:
         # Create some agendas
         agenda1 = PlannerAgenda(
             name="Agenda 1",
-            index=0,
+            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
             agenda_type=PlannerAgendaType.CUSTOM.value,
             user_id=test_user.id
         )
         agenda2 = PlannerAgenda(
             name="Agenda 2",
-            index=1,
+            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN + 1,
             agenda_type=PlannerAgendaType.CUSTOM.value,
             user_id=test_user.id
         )
         agenda3 = PlannerAgenda(
             name="Agenda 3",
-            index=2,
+            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN + 2,
             agenda_type=PlannerAgendaType.CUSTOM.value,
             user_id=test_user.id
         )
@@ -172,6 +172,6 @@ class TestPlannerAgendaService:
         db_agenda1 = test_db.query(PlannerAgenda).filter(PlannerAgenda.id == agenda1.id).first()
         db_agenda2 = test_db.query(PlannerAgenda).filter(PlannerAgenda.id == agenda2.id).first()
         db_agenda3 = test_db.query(PlannerAgenda).filter(PlannerAgenda.id == agenda3.id).first()
-        assert db_agenda3.index == 0
-        assert db_agenda1.index == 1
-        assert db_agenda2.index == 2
+        assert db_agenda3.index == 1
+        assert db_agenda1.index == 2
+        assert db_agenda2.index == 3

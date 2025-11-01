@@ -27,6 +27,8 @@ class PlannerAgenda(BaseModel):
     agenda_type: str
     name: str
     index: int
+    todo_items_cnt: int = 0
+    completed_items_cnt: int = 0
 
     class Config:
         from_attributes = True
