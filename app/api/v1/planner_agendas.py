@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.schemas.planner_agenda import (
     PlannerAgenda, PlannerAgendaCreate, PlannerAgendaUpdate,
     PlannerAgendaItem, PlannerAgendaItemCreate, PlannerAgendaItemUpdate,
-    ReorderAgendaItemsRequest
+    ReorderAgendaItemsRequest, ReorderAgendasRequest
 )
 from app.services.agenda_service import PlannerAgendaService
 from app.services.agenda_item_service import PlannerAgendaItemService
@@ -19,13 +19,13 @@ router = APIRouter()
 
 @router.get("/", response_model=list[PlannerAgenda])
 def get_agendas(
-    agenda_types: list[PlannerAgendaType] | None = Query(None,description="Agenda types to include: monthly, backlog, custom"),
+    agenda_types: list[PlannerAgendaType] | None = Query(None,description="Agenda types to include: monthly, custom"),
     day: date | None = Query(None, description="Reference day to resolve monthly agenda (defaults to today)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
     if not agenda_types:
-        agenda_types = [PlannerAgendaType.MONTHLY, PlannerAgendaType.BACKLOG]
+        agenda_types = [PlannerAgendaType.MONTHLY, PlannerAgendaType.CUSTOM]
 
     agendas = PlannerAgendaService.get_planner_agendas(db, current_user.id, agenda_types, day)
     return agendas
@@ -80,18 +80,18 @@ def delete_planner_agenda(
 
 @router.post("/reorder/", response_model=dict)
 def reorder_agendas(
-    request: ReorderAgendaItemsRequest,
+    request: ReorderAgendasRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
     # First verify all agendas belong to the current user
-    for agenda_id in request.ordered_item_ids:
+    for agenda_id in request.ordered_agenda_ids:
         db_agenda = PlannerAgendaService.get_planner_agenda(db, agenda_id=agenda_id, user_id=current_user.id)
         if not db_agenda:
             raise HTTPException(status_code=404, detail=f"Planner agenda with id {agenda_id} not found")
 
     # Then reorder them
-    success = PlannerAgendaService.reorder_agendas(db, request.ordered_item_ids, user_id=current_user.id)
+    success = PlannerAgendaService.reorder_agendas(db, request.ordered_agenda_ids, user_id=current_user.id)
     if not success:
         raise HTTPException(status_code=400, detail="Failed to reorder agendas")
     return {"detail": "Agendas reordered successfully"}

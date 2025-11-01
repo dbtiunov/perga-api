@@ -4,6 +4,7 @@ from datetime import datetime, date
 from sqlalchemy import or_, and_
 from sqlalchemy.orm import Session
 
+from app import const
 from app.core.db_utils import atomic_transaction, TransactionRollback
 from app.models.choices import PlannerAgendaType
 from app.models.planner import PlannerAgenda, PlannerAgendaItem
@@ -38,7 +39,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
                 monthly_agenda_create = PlannerAgendaCreate(
                     name=monthly_name,
                     agenda_type=PlannerAgendaType.MONTHLY,
-                    index=0
+                    index=const.PLANNER_MONTHLY_AGENDA_INDEX
                 )
                 cls.create_planner_agenda(db, monthly_agenda_create, user_id)
 
@@ -52,19 +53,6 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
         if PlannerAgendaType.CUSTOM in agenda_types:
             filters.append(PlannerAgenda.agenda_type == PlannerAgendaType.CUSTOM.value)
 
-        if PlannerAgendaType.BACKLOG in agenda_types:
-            # Ensure Backlog agenda exists
-            backlog_agenda = base_query.filter(PlannerAgenda.agenda_type == PlannerAgendaType.BACKLOG.value).first()
-            if not backlog_agenda:
-                backlog_agenda_create = PlannerAgendaCreate(
-                    name="Backlog",
-                    agenda_type=PlannerAgendaType.BACKLOG,
-                    index=1
-                )
-                cls.create_planner_agenda(db, backlog_agenda_create, user_id)
-
-            filters.append(PlannerAgenda.agenda_type == PlannerAgendaType.BACKLOG.value)
-
         if filters:
             base_query = base_query.filter(or_(*filters))
 
@@ -74,7 +62,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
     def get_new_agenda_index(cls, db: Session, user_id) -> int:
         query = cls.get_base_query(db).filter(PlannerAgenda.user_id == user_id)
         max_index_agenda = query.order_by(PlannerAgenda.index.desc()).first()
-        return max_index_agenda.index + 1 if max_index_agenda else 0
+        return max_index_agenda.index + 1 if max_index_agenda else const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
 
     @classmethod
     def get_planner_agenda(cls, db: Session, agenda_id: int, user_id: int) -> PlannerAgenda | None:
@@ -133,7 +121,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
 
     @classmethod
     def reorder_agendas(cls, db: Session, ordered_agenda_ids: list[int], user_id: int) -> bool:
-        new_index = 0
+        new_index = const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
 
         try:
             with atomic_transaction(db):

@@ -28,6 +28,9 @@ class PlannerAgenda(BaseModel):
     name: str
     index: int
 
+    class Config:
+        from_attributes = True
+
 
 # Agenda Item schemas
 class PlannerAgendaItemBase(BasePlannerItemBase):
@@ -58,6 +61,9 @@ class PlannerAgendaItem(PlannerAgendaItemBase):
     id: int
 
 
-# Common schemas
 class ReorderAgendaItemsRequest(BaseModel):
     ordered_item_ids: list[int]
+
+
+class ReorderAgendasRequest(BaseModel):
+    ordered_agenda_ids: list[int]
