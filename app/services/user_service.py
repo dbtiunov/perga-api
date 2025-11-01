@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.services.base_service import BaseService
-from app.services.auth_utils import get_password_hash
+from app.services.auth_utils import get_password_hash, verify_password
 
 
 class UserService(BaseService[User]):
@@ -52,12 +52,6 @@ class UserService(BaseService[User]):
             return None
 
         update_data = user_in.model_dump(exclude_unset=True)
-
-        # Hash password if it's being updated
-        plain_password = update_data.pop('password', None)
-        if plain_password:
-            update_data['hashed_password'] = get_password_hash(plain_password)
-
         for field, new_value in update_data.items():
             if isinstance(new_value, Enum):
                 new_value = new_value.value
@@ -67,3 +61,20 @@ class UserService(BaseService[User]):
         db.refresh(db_user)
         return db_user
 
+    @classmethod
+    def change_password(cls, db: Session, user_id: int, current_password: str, new_password: str) -> User | None:
+        user = cls.get_user_by_id(db, user_id)
+        if not user:
+            return None
+
+        # Verify current password
+        if not verify_password(current_password, user.hashed_password):
+            # Do not change anything if verification fails
+            raise ValueError("Incorrect current password")
+
+        # Update to new password
+        user.hashed_password = get_password_hash(new_password)
+        db.commit()
+
+        db.refresh(user)
+        return user

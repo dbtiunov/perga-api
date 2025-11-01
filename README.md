@@ -14,7 +14,7 @@ Personal organizer that helps you plan and organize your days and months efficie
 ## Features
 
 - Daily planner
-- Monthly agenda and backlog
+- Monthly and custom agendas
 - RESTful API with FastAPI
 - User authentication with JWT tokens
 - Comprehensive documentation with Swagger UI

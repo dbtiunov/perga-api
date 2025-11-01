@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import jwt
 
 from app.services.auth_utils import (
@@ -43,16 +43,16 @@ class TestAuthUtils:
         
         # Verify that the token has an expiration time
         assert "exp" in payload
-        exp_time = datetime.fromtimestamp(payload["exp"])
-        now = datetime.now()
+        exp_time = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
+        now = datetime.now(timezone.utc)
         assert exp_time > now
         
         # Create a token with a custom expiration time
         custom_expires = timedelta(minutes=30)
         token = create_token(data, expires_delta=custom_expires)
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        exp_time = datetime.fromtimestamp(payload["exp"])
-        expected_exp_time = datetime.now() + custom_expires
+        exp_time = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
+        expected_exp_time = datetime.now(timezone.utc) + custom_expires
         # Allow for a small difference due to processing time
         assert abs((exp_time - expected_exp_time).total_seconds()) < 5
 
@@ -68,17 +68,17 @@ class TestAuthUtils:
         assert payload["token_type"] == "access"
         
         # Verify that the token has the default expiration time
-        exp_time = datetime.fromtimestamp(payload["exp"])
-        expected_exp_time = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        exp_time = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
+        expected_exp_time = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         # Allow for a small difference due to processing time
         assert abs((exp_time - expected_exp_time).total_seconds()) < 5
         
         # Create an access token with a custom expiration time
-        custom_expires = timedelta(minutes=30)
+        custom_expires = timedelta(minutes=20)
         token = create_access_token(data, expires_delta=custom_expires)
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        exp_time = datetime.fromtimestamp(payload["exp"])
-        expected_exp_time = datetime.now() + custom_expires
+        exp_time = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
+        expected_exp_time = datetime.now(timezone.utc) + custom_expires
         # Allow for a small difference due to processing time
         assert abs((exp_time - expected_exp_time).total_seconds()) < 5
 
@@ -94,8 +94,8 @@ class TestAuthUtils:
         assert payload["token_type"] == "refresh"
         
         # Verify that the token has the default expiration time
-        exp_time = datetime.fromtimestamp(payload["exp"])
-        expected_exp_time = datetime.now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        exp_time = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
+        expected_exp_time = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         # Allow for a small difference due to processing time
         assert abs((exp_time - expected_exp_time).total_seconds()) < 5
         
@@ -103,8 +103,8 @@ class TestAuthUtils:
         custom_expires = timedelta(days=7)
         token = create_refresh_token(data, expires_delta=custom_expires)
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        exp_time = datetime.fromtimestamp(payload["exp"])
-        expected_exp_time = datetime.now() + custom_expires
+        exp_time = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
+        expected_exp_time = datetime.now(timezone.utc) + custom_expires
         # Allow for a small difference due to processing time
         assert abs((exp_time - expected_exp_time).total_seconds()) < 5
 
