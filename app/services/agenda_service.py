@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 
-from sqlalchemy import or_, and_, func, case
+from sqlalchemy import func, case
 from sqlalchemy.orm import Session
 
 from app import const
