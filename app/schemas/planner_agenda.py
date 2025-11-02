@@ -69,3 +69,11 @@ class ReorderAgendaItemsRequest(BaseModel):
 
 class ReorderAgendasRequest(BaseModel):
     ordered_agenda_ids: list[int]
+
+
+class CopyAgendaItemRequest(BaseModel):
+    agenda_id: int
+
+
+class SnoozeAgendaItemRequest(BaseModel):
+    agenda_id: int

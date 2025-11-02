@@ -8,7 +8,8 @@ from app.core.database import get_db
 from app.schemas.planner_agenda import (
     PlannerAgenda, PlannerAgendaCreate, PlannerAgendaUpdate,
     PlannerAgendaItem, PlannerAgendaItemCreate, PlannerAgendaItemUpdate,
-    ReorderAgendaItemsRequest, ReorderAgendasRequest
+    ReorderAgendaItemsRequest, ReorderAgendasRequest,
+    CopyAgendaItemRequest, SnoozeAgendaItemRequest,
 )
 from app.services.agenda_service import PlannerAgendaService
 from app.services.agenda_item_service import PlannerAgendaItemService
@@ -190,3 +191,53 @@ def get_planner_items_by_agendas(
         result[agenda_id] = items
 
     return result
+
+
+@router.post("/items/{item_id}/copy/", response_model=PlannerAgendaItem)
+def copy_planner_agenda_item(
+    request: CopyAgendaItemRequest,
+    item_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(AuthService.get_current_user)
+):
+    # Check that the item exists and belongs to the current user
+    db_item = PlannerAgendaItemService.get_planner_item(db, item_id=item_id, user_id=current_user.id)
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Planner agenda item not found")
+
+    # Check that target agenda exists and belongs to the current user
+    db_agenda = PlannerAgendaService.get_planner_agenda(db, request.agenda_id, user_id=current_user.id)
+    if not db_agenda:
+        raise HTTPException(status_code=404, detail="Target planner agenda not found")
+
+    new_db_item = PlannerAgendaItemService.copy_agenda_item(
+        db, item_id=item_id, agenda_id=request.agenda_id, user_id=current_user.id
+    )
+    if not new_db_item:
+        raise HTTPException(status_code=400, detail="Failed to copy planner agenda item")
+    return new_db_item
+
+
+@router.post("/items/{item_id}/snooze/", response_model=PlannerAgendaItem)
+def snooze_planner_agenda_item(
+    request: SnoozeAgendaItemRequest,
+    item_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(AuthService.get_current_user)
+):
+    # Check that the item exists and belongs to the current user
+    db_item = PlannerAgendaItemService.get_planner_item(db, item_id=item_id, user_id=current_user.id)
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Planner agenda item not found")
+
+    # Check that target agenda exists and belongs to the current user
+    db_agenda = PlannerAgendaService.get_planner_agenda(db, request.agenda_id, user_id=current_user.id)
+    if not db_agenda:
+        raise HTTPException(status_code=404, detail="Target planner agenda not found")
+
+    new_db_item = PlannerAgendaItemService.snooze_agenda_item(
+        db, item_id=item_id, agenda_id=request.agenda_id, user_id=current_user.id
+    )
+    if not new_db_item:
+        raise HTTPException(status_code=400, detail="Failed to snooze planner agenda item")
+    return new_db_item

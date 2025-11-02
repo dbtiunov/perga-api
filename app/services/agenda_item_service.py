@@ -3,6 +3,7 @@ from enum import Enum
 from sqlalchemy.orm import Session
 
 from app.core.db_utils import atomic_transaction, TransactionRollback
+from app.models.choices import PlannerItemState
 from app.models.planner import PlannerAgendaItem
 from app.schemas.planner_agenda import PlannerAgendaItemCreate, PlannerAgendaItemUpdate
 from app.services.base_service import BaseService
@@ -31,7 +32,7 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
         return query.first()
 
     @classmethod
-    def get_planner_items_by_agendas(cls, db: Session, agenda_id: int, user_id: int) -> PlannerAgendaItem | None:
+    def get_planner_items_by_agendas(cls, db: Session, agenda_id: int, user_id: int) -> list[PlannerAgendaItem]:
         query = cls.get_base_query(db).filter(
             PlannerAgendaItem.user_id == user_id,
             PlannerAgendaItem.agenda_id == agenda_id
@@ -93,3 +94,46 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
             return False
 
         return True
+
+
+    @classmethod
+    def copy_agenda_item(cls, db: Session, item_id: int, agenda_id: int, user_id: int) -> PlannerAgendaItem | None:
+        """Create new item in specified agenda copying text from the original"""
+        db_item = cls.get_planner_item(db, item_id, user_id)
+        if not db_item:
+            return None
+
+        new_index = cls.get_new_item_index(db, agenda_id, user_id)
+        new_db_item = PlannerAgendaItem(
+            user_id=user_id,
+            agenda_id=agenda_id,
+            text=db_item.text,
+            index=new_index,
+        )
+        db.add(new_db_item)
+        db.commit()
+
+        db.refresh(new_db_item)
+        return new_db_item
+
+    @classmethod
+    def snooze_agenda_item(cls, db: Session, item_id: int, agenda_id: int, user_id: int) -> PlannerAgendaItem | None:
+        """Mark original item as snoozed and create a new copy in specified agenda"""
+        db_item = cls.get_planner_item(db, item_id, user_id)
+        if not db_item:
+            return None
+
+        db_item.state = PlannerItemState.SNOOZED.value
+
+        new_index = cls.get_new_item_index(db, agenda_id, user_id)
+        new_db_item = PlannerAgendaItem(
+            user_id=user_id,
+            agenda_id=agenda_id,
+            text=db_item.text,
+            index=new_index,
+        )
+        db.add(new_db_item)
+        db.commit()
+
+        db.refresh(new_db_item)
+        return new_db_item

@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
 
 from sqlalchemy import or_, and_, func, case
 from sqlalchemy.orm import Session
@@ -21,46 +22,46 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
     def get_planner_agendas(
         cls, db: Session, user_id: int, agenda_types: list[PlannerAgendaType], day: date | None = None
     ) -> list[PlannerAgenda]:
+        """
+        Returns list of user agendas depending on provided agenda types:
+        1. Monthly - current and next month
+        2. Custom - active custom agendas
+        """
         base_query = cls.get_base_query(db).filter(PlannerAgenda.user_id == user_id)
+        result_agendas = []
 
-        filters = []
         if PlannerAgendaType.MONTHLY in agenda_types:
             if not day:
                 day = datetime.today()
 
-            monthly_name = day.strftime("%B %Y")
-            monthly_agenda = base_query.filter(
-                PlannerAgenda.name == monthly_name,
-                PlannerAgenda.agenda_type == PlannerAgendaType.MONTHLY.value
-            ).first()
+            current_month_name = day.strftime("%B %Y")
+            next_month_name = (day.replace(day=1) + relativedelta(months=1)).strftime("%B %Y")
+            month_names = [current_month_name, next_month_name]
+            month_agendas = base_query.filter(
+                PlannerAgenda.agenda_type == PlannerAgendaType.MONTHLY.value,
+                PlannerAgenda.name.in_(month_names)
+            ).all()
 
-            # If month agenda doesn't exist for this user, create it
-            if not monthly_agenda:
-                monthly_agenda_create = PlannerAgendaCreate(
-                    name=monthly_name,
-                    agenda_type=PlannerAgendaType.MONTHLY,
-                    index=const.PLANNER_MONTHLY_AGENDA_INDEX
-                )
-                cls.create_planner_agenda(db, monthly_agenda_create, user_id)
-
-            filters.append(
-                and_(
-                    PlannerAgenda.agenda_type == PlannerAgendaType.MONTHLY.value,
-                    PlannerAgenda.name == monthly_name
-                )
-            )
+            # Ensure that month agenda exists
+            for month_name in month_names:
+                try:
+                    month_agenda = [agenda for agenda in month_agendas if agenda.name == month_name][0]
+                except IndexError:
+                    agenda_create = PlannerAgendaCreate(
+                        name=month_name,
+                        agenda_type=PlannerAgendaType.MONTHLY,
+                        index=const.PLANNER_MONTHLY_AGENDA_INDEX
+                    )
+                    month_agenda = cls.create_planner_agenda(db, agenda_create, user_id)
+                result_agendas.append(month_agenda)
 
         if PlannerAgendaType.CUSTOM in agenda_types:
-            filters.append(PlannerAgenda.agenda_type == PlannerAgendaType.CUSTOM.value)
-
-        if filters:
-            base_query = base_query.filter(or_(*filters))
-
-        agendas = base_query.order_by(PlannerAgenda.index).all()
+            custom_agendas = base_query.filter(PlannerAgenda.agenda_type == PlannerAgendaType.CUSTOM.value).all()
+            result_agendas.extend(custom_agendas)
 
         # Enrich agendas with counts of items per state
-        if agendas:
-            agenda_ids = [agenda.id for agenda in agendas]
+        if result_agendas:
+            agenda_ids = [agenda.id for agenda in result_agendas]
 
             items_cnt_query = (
                 db.query(
@@ -81,14 +82,14 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
             items_cnt_map = {
                 row.agenda_id: (int(row.todo_cnt or 0), int(row.completed_cnt or 0)) for row in items_cnt_query
             }
-            for agenda in agendas:
+            for agenda in result_agendas:
                 todo_cnt, completed_cnt = items_cnt_map.get(agenda.id, (0, 0))
 
                 # attach as dynamic attributes so Pydantic can serialize them via from_attributes
                 setattr(agenda, 'todo_items_cnt', todo_cnt)
                 setattr(agenda, 'completed_items_cnt', completed_cnt)
 
-        return agendas
+        return result_agendas
 
     @classmethod
     def get_new_agenda_index(cls, db: Session, user_id) -> int:
