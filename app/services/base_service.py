@@ -13,4 +13,4 @@ class BaseService(Generic[T]):
 
     @classmethod
     def get_base_query(cls, db: Session) -> Query:
-        return db.query(cls.model).filter(cls.model.is_archived.is_(False))
+        return db.query(cls.model).filter(cls.model.is_deleted.is_(False))

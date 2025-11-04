@@ -69,12 +69,12 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
         return db_item
 
     @classmethod
-    def archive_planner_item(cls, db: Session, item_id: int, user_id: int) -> bool:
+    def delete_planner_item(cls, db: Session, item_id: int, user_id: int) -> bool:
         db_item = cls.get_planner_item(db, item_id, user_id)
         if not db_item:
             return False
 
-        db_item.archive()
+        db_item.mark_as_deleted()
         db.commit()
 
         return True

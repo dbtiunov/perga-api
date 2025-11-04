@@ -179,8 +179,8 @@ class TestPlannerAgendaItemService:
         db_item = PlannerAgendaItemService.update_planner_item(test_db, item.id, item_update, 999)
         assert db_item is None
 
-    def test_archive_planner_item(self, test_db: Session, test_user, test_agenda):
-        """Test that archive_planner_item archives an item correctly"""
+    def test_delete_planner_item(self, test_db: Session, test_user, test_agenda):
+        """Test that delete_planner_item deletes an item correctly"""
         # Create an item
         item = PlannerAgendaItem(
             text="Test Item",
@@ -193,21 +193,21 @@ class TestPlannerAgendaItemService:
         test_db.commit()
         test_db.refresh(item)
         
-        # Archive the item
-        success = PlannerAgendaItemService.archive_planner_item(test_db, item.id, test_user.id)
+        # Delete the item
+        success = PlannerAgendaItemService.delete_planner_item(test_db, item.id, test_user.id)
         assert success is True
         
-        # Check that the item was archived
+        # Check that the item was marked as deleted
         db_item = test_db.query(PlannerAgendaItem).filter(PlannerAgendaItem.id == item.id).first()
-        assert db_item.is_archived is True
-        assert db_item.archived_dt is not None
+        assert db_item.is_deleted is True
+        assert db_item.deleted_dt is not None
         
-        # Try to archive a non-existent item
-        success = PlannerAgendaItemService.archive_planner_item(test_db, 999, test_user.id)
+        # Try to delete a non-existent item
+        success = PlannerAgendaItemService.delete_planner_item(test_db, 999, test_user.id)
         assert success is False
         
-        # Try to archive an item with a different user_id
-        success = PlannerAgendaItemService.archive_planner_item(test_db, item.id, 999)
+        # Try to delete an item with a different user_id
+        success = PlannerAgendaItemService.delete_planner_item(test_db, item.id, 999)
         assert success is False
 
     def test_reorder_items(self, test_db: Session, test_user, test_agenda):

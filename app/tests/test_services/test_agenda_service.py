@@ -107,8 +107,8 @@ class TestPlannerAgendaService:
         db_agenda = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, agenda_update, 999)
         assert db_agenda is None
 
-    def test_archive_planner_agenda(self, test_db: Session, test_user):
-        """Test that archive_planner_agenda archives an agenda correctly"""
+    def test_delete_planner_agenda(self, test_db: Session, test_user):
+        """Test that delete_planner_agenda deletes an agenda correctly"""
         # Create an agenda
         agenda = PlannerAgenda(
             name="Test Agenda",
@@ -120,21 +120,21 @@ class TestPlannerAgendaService:
         test_db.commit()
         test_db.refresh(agenda)
         
-        # Archive the agenda
-        success = PlannerAgendaService.archive_planner_agenda(test_db, agenda.id, test_user.id)
+        # Delete the agenda
+        success = PlannerAgendaService.delete_planner_agenda(test_db, agenda.id, test_user.id)
         assert success is True
         
-        # Check that the agenda was archived
+        # Check that the agenda was marked as deleted
         db_agenda = test_db.query(PlannerAgenda).filter(PlannerAgenda.id == agenda.id).first()
-        assert db_agenda.is_archived is True
-        assert db_agenda.archived_dt is not None
+        assert db_agenda.is_deleted is True
+        assert db_agenda.deleted_dt is not None
         
-        # Try to archive a non-existent agenda
-        success = PlannerAgendaService.archive_planner_agenda(test_db, 999, test_user.id)
+        # Try to delete a non-existent agenda
+        success = PlannerAgendaService.delete_planner_agenda(test_db, 999, test_user.id)
         assert success is False
         
-        # Try to archive an agenda with a different user_id
-        success = PlannerAgendaService.archive_planner_agenda(test_db, agenda.id, 999)
+        # Try to delete an agenda with a different user_id
+        success = PlannerAgendaService.delete_planner_agenda(test_db, agenda.id, 999)
         assert success is False
 
     def test_reorder_agendas(self, test_db: Session, test_user):

@@ -11,6 +11,7 @@ class PlannerItemState(Enum):
 class PlannerAgendaType(Enum):
     MONTHLY = "monthly"
     CUSTOM = "custom"
+    ARCHIVED = "archived"
 
 
 class WeekStartDay(Enum):

@@ -14,9 +14,9 @@ class BaseModel(Base):
         onupdate=lambda: datetime.now(timezone.utc)
     )
 
-    is_archived = Column(Boolean, default=False)
-    archived_dt = Column(DateTime, nullable=True, default=None)
+    is_deleted = Column(Boolean, default=False)
+    deleted_dt = Column(DateTime(timezone=True), nullable=True, default=None)
 
-    def archive(self):
-        self.is_archived = True
-        self.archived_dt = datetime.now(timezone.utc)
+    def mark_as_deleted(self):
+        self.is_deleted = True
+        self.deleted_dt = datetime.now(timezone.utc)

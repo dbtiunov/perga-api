@@ -17,6 +17,7 @@ class PlannerAgendaCreate(BaseModel):
 class PlannerAgendaUpdate(BaseModel):
     name: str | None = None
     index: int | None = None
+    agenda_type: PlannerAgendaType | None = None
 
     class Config:
         use_enum_values = True

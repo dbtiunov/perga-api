@@ -134,20 +134,20 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
         return db_agenda
 
     @classmethod
-    def archive_planner_agenda(cls, db: Session, agenda_id: int, user_id: int) -> bool:
+    def delete_planner_agenda(cls, db: Session, agenda_id: int, user_id: int) -> bool:
         db_agenda = cls.get_planner_agenda(db, agenda_id, user_id)
         if not db_agenda:
             return False
 
-        # Archive all items in this agenda
+        # Mark as deleted all items in this agenda as well
         db.query(PlannerAgendaItem).filter(
-            PlannerAgendaItem.is_archived.is_(False),
+            PlannerAgendaItem.is_deleted.is_(False),
             PlannerAgendaItem.agenda_id == agenda_id
         ).update({
-            'is_archived': True,
-            'archived_dt': datetime.now()
+            'is_deleted': True,
+            'deleted_dt': datetime.now()
         })
-        db_agenda.archive()
+        db_agenda.mark_as_deleted()
         db.commit()
 
         return True

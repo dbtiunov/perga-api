@@ -49,6 +49,11 @@ def update_planner_agenda(
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
+    if agenda_item.agenda_type and agenda_item.agenda_type not in [
+        PlannerAgendaType.ARCHIVED, PlannerAgendaType.CUSTOM
+    ]:
+        raise HTTPException(status_code=400, detail="Bad request")
+
     # First check if the agenda belongs to the current user
     db_agenda = PlannerAgendaService.get_planner_agenda(db, agenda_id=agenda_id, user_id=current_user.id)
     if not db_agenda:
@@ -73,7 +78,7 @@ def delete_planner_agenda(
         raise HTTPException(status_code=404, detail="Planner agenda not found")
 
     # Then delete it
-    success = PlannerAgendaService.archive_planner_agenda(db, agenda_id=agenda_id, user_id=current_user.id)
+    success = PlannerAgendaService.delete_planner_agenda(db, agenda_id=agenda_id, user_id=current_user.id)
     if not success:
         raise HTTPException(status_code=500, detail="Failed to delete planner agenda")
     return {"detail": "Planner agenda and its items deleted successfully"}
@@ -148,7 +153,7 @@ def delete_planner_agenda_item(
         raise HTTPException(status_code=404, detail="Planner agenda item not found")
 
     # Then delete it
-    success = PlannerAgendaItemService.archive_planner_item(db, item_id=item_id, user_id=current_user.id)
+    success = PlannerAgendaItemService.delete_planner_item(db, item_id=item_id, user_id=current_user.id)
     if not success:
         raise HTTPException(status_code=500, detail="Failed to delete planner agenda item")
     return {"detail": "Planner agenda item deleted successfully"}
