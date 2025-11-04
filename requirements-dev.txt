@@ -1,2 +1,4 @@
-pytest
-ruff
+pytest==8.0.2
+ruff==0.12.5
+ipython==8.36.0
+ipdb==0.13.13
