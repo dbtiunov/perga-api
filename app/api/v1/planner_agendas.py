@@ -9,7 +9,7 @@ from app.schemas.planner_agenda import (
     PlannerAgenda, PlannerAgendaCreate, PlannerAgendaUpdate,
     PlannerAgendaItem, PlannerAgendaItemCreate, PlannerAgendaItemUpdate,
     ReorderAgendaItemsRequest, ReorderAgendasRequest,
-    CopyAgendaItemRequest, SnoozeAgendaItemRequest,
+    CopyAgendaItemRequest, MoveAgendaItemRequest,
 )
 from app.services.agenda_service import PlannerAgendaService
 from app.services.agenda_item_service import PlannerAgendaItemService
@@ -49,12 +49,13 @@ def update_planner_agenda(
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
+    # validate agenda_type for archive/unarchive actions
     if agenda_item.agenda_type and agenda_item.agenda_type not in [
-        PlannerAgendaType.ARCHIVED, PlannerAgendaType.CUSTOM
+        PlannerAgendaType.ARCHIVED.value, PlannerAgendaType.CUSTOM.value
     ]:
         raise HTTPException(status_code=400, detail="Bad request")
 
-    # First check if the agenda belongs to the current user
+    # Check if the agenda belongs to the current user
     db_agenda = PlannerAgendaService.get_planner_agenda(db, agenda_id=agenda_id, user_id=current_user.id)
     if not db_agenda:
         raise HTTPException(status_code=404, detail="Planner agenda not found")
@@ -223,9 +224,9 @@ def copy_planner_agenda_item(
     return new_db_item
 
 
-@router.post("/items/{item_id}/snooze/", response_model=PlannerAgendaItem)
-def snooze_planner_agenda_item(
-    request: SnoozeAgendaItemRequest,
+@router.post("/items/{item_id}/move/", response_model=PlannerAgendaItem)
+def move_planner_agenda_item(
+    request: MoveAgendaItemRequest,
     item_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
@@ -240,7 +241,7 @@ def snooze_planner_agenda_item(
     if not db_agenda:
         raise HTTPException(status_code=404, detail="Target planner agenda not found")
 
-    new_db_item = PlannerAgendaItemService.snooze_agenda_item(
+    new_db_item = PlannerAgendaItemService.move_agenda_item(
         db, item_id=item_id, agenda_id=request.agenda_id, user_id=current_user.id
     )
     if not new_db_item:

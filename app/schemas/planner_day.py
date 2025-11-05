@@ -9,7 +9,6 @@ class BasePlannerItemBase(BaseModel):
     text: str
     index: int
     state: PlannerItemState
-    user_id: int
 
     class Config:
         use_enum_values = True

@@ -76,5 +76,5 @@ class CopyAgendaItemRequest(BaseModel):
     agenda_id: int
 
 
-class SnoozeAgendaItemRequest(BaseModel):
+class MoveAgendaItemRequest(BaseModel):
     agenda_id: int

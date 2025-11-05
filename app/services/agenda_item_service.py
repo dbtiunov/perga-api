@@ -98,7 +98,7 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
 
     @classmethod
     def copy_agenda_item(cls, db: Session, item_id: int, agenda_id: int, user_id: int) -> PlannerAgendaItem | None:
-        """Create new item in specified agenda copying text from the original"""
+        """ Create new item in specified agenda copying text from the original """
         db_item = cls.get_planner_item(db, item_id, user_id)
         if not db_item:
             return None
@@ -117,13 +117,13 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
         return new_db_item
 
     @classmethod
-    def snooze_agenda_item(cls, db: Session, item_id: int, agenda_id: int, user_id: int) -> PlannerAgendaItem | None:
-        """Mark original item as snoozed and create a new copy in specified agenda"""
+    def move_agenda_item(cls, db: Session, item_id: int, agenda_id: int, user_id: int) -> PlannerAgendaItem | None:
+        """ Create a new copy in specified agenda and remove original agenda item """
         db_item = cls.get_planner_item(db, item_id, user_id)
         if not db_item:
             return None
 
-        db_item.state = PlannerItemState.SNOOZED.value
+        db_item.mark_as_deleted()
 
         new_index = cls.get_new_item_index(db, agenda_id, user_id)
         new_db_item = PlannerAgendaItem(

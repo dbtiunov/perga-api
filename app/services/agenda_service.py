@@ -59,6 +59,10 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
             custom_agendas = base_query.filter(PlannerAgenda.agenda_type == PlannerAgendaType.CUSTOM.value).all()
             result_agendas.extend(custom_agendas)
 
+        if PlannerAgendaType.ARCHIVED in agenda_types:
+            archived_agendas = base_query.filter(PlannerAgenda.agenda_type == PlannerAgendaType.ARCHIVED.value).all()
+            result_agendas.extend(archived_agendas)
+
         # Enrich agendas with counts of items per state
         if result_agendas:
             agenda_ids = [agenda.id for agenda in result_agendas]
