@@ -10,6 +10,37 @@ from app.services.agenda_service import PlannerAgendaService
 class TestPlannerAgendaService:
     """Tests for the PlannerAgendaService class"""
 
+    def test_archive_and_unarchive_agenda(self, test_db: Session, test_user):
+        """Archiving CUSTOM agenda to ARCHIVED and then unarchiving back to CUSTOM"""
+        # Create a CUSTOM agenda
+        agenda = PlannerAgenda(
+            name="To Archive",
+            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
+            agenda_type=PlannerAgendaType.CUSTOM.value,
+            user_id=test_user.id
+        )
+        test_db.add(agenda)
+        test_db.commit()
+        test_db.refresh(agenda)
+
+        # Archive it (CUSTOM -> ARCHIVED)
+        update = PlannerAgendaUpdate(agenda_type=PlannerAgendaType.ARCHIVED)
+        archived = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, update, test_user.id)
+        assert archived is not None
+        assert archived.agenda_type == PlannerAgendaType.ARCHIVED.value
+        # Unchanged fields
+        assert archived.name == "To Archive"
+        assert archived.index == const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
+
+        # Unarchive it back (ARCHIVED -> CUSTOM)
+        update_back = PlannerAgendaUpdate(agenda_type=PlannerAgendaType.CUSTOM)
+        unarchived = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, update_back, test_user.id)
+        assert unarchived is not None
+        assert unarchived.agenda_type == PlannerAgendaType.CUSTOM.value
+        # Unchanged fields
+        assert unarchived.name == "To Archive"
+        assert unarchived.index == const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
+
     def test_get_new_agenda_index(self, test_db: Session, test_user):
         """Test that get_new_agenda_index returns the correct index"""
         # When there are no agendas, index should be 1
