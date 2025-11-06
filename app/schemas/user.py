@@ -22,5 +22,9 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     username: str | None = None
     email: str | None = None
-    password: str | None = None
     week_start_day: WeekStartDay | None = None
+
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str

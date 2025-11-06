@@ -76,7 +76,7 @@ class PlannerDayItemService(BaseService[PlannerDayItem]):
         if not db_item:
             return False
 
-        db_item.archive()
+        db_item.mark_as_deleted()
         db.commit()
 
         return True

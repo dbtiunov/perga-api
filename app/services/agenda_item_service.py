@@ -31,7 +31,7 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
         return query.first()
 
     @classmethod
-    def get_planner_items_by_agendas(cls, db: Session, agenda_id: int, user_id: int) -> PlannerAgendaItem | None:
+    def get_planner_items_by_agendas(cls, db: Session, agenda_id: int, user_id: int) -> list[PlannerAgendaItem]:
         query = cls.get_base_query(db).filter(
             PlannerAgendaItem.user_id == user_id,
             PlannerAgendaItem.agenda_id == agenda_id
@@ -68,12 +68,12 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
         return db_item
 
     @classmethod
-    def archive_planner_item(cls, db: Session, item_id: int, user_id: int) -> bool:
+    def delete_planner_item(cls, db: Session, item_id: int, user_id: int) -> bool:
         db_item = cls.get_planner_item(db, item_id, user_id)
         if not db_item:
             return False
 
-        db_item.archive()
+        db_item.mark_as_deleted()
         db.commit()
 
         return True
@@ -93,3 +93,47 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
             return False
 
         return True
+
+
+    @classmethod
+    def copy_agenda_item(cls, db: Session, item_id: int, agenda_id: int, user_id: int) -> PlannerAgendaItem | None:
+        """ Create new item in specified agenda copying text from the original """
+        db_item = cls.get_planner_item(db, item_id, user_id)
+        if not db_item:
+            return None
+
+        new_index = cls.get_new_item_index(db, agenda_id, user_id)
+        new_db_item = PlannerAgendaItem(
+            user_id=user_id,
+            agenda_id=agenda_id,
+            text=db_item.text,
+            index=new_index,
+        )
+        db.add(new_db_item)
+        db.commit()
+
+        db.refresh(new_db_item)
+        return new_db_item
+
+    @classmethod
+    def move_agenda_item(cls, db: Session, item_id: int, agenda_id: int, user_id: int) -> PlannerAgendaItem | None:
+        """ Create a new copy in specified agenda and remove original agenda item """
+        db_item = cls.get_planner_item(db, item_id, user_id)
+        if not db_item:
+            return None
+
+        db_item.mark_as_deleted()
+
+        new_index = cls.get_new_item_index(db, agenda_id, user_id)
+        new_db_item = PlannerAgendaItem(
+            user_id=user_id,
+            agenda_id=agenda_id,
+            text=db_item.text,
+            state=db_item.state,
+            index=new_index,
+        )
+        db.add(new_db_item)
+        db.commit()
+
+        db.refresh(new_db_item)
+        return new_db_item

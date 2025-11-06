@@ -5,20 +5,9 @@ from app.models.choices import PlannerItemState, PlannerAgendaType
 from app.schemas.planner_day import BasePlannerItemBase
 
 
-# Agenda schemas
-class PlannerAgendaBase(BaseModel):
-    user_id: int
-    agenda_type: str
-    name: str
-    index: int
-
-    class Config:
-        from_attributes = True
-
-
 class PlannerAgendaCreate(BaseModel):
+    agenda_type: PlannerAgendaType
     name: str
-    agenda_type: str | None = PlannerAgendaType.CUSTOM.value
     index: int | None = None
 
     class Config:
@@ -27,7 +16,8 @@ class PlannerAgendaCreate(BaseModel):
 
 class PlannerAgendaUpdate(BaseModel):
     name: str | None = None
-    agenda_type: str | None = None
+    index: int | None = None
+    agenda_type: PlannerAgendaType | None = None
 
     class Config:
         use_enum_values = True
@@ -37,7 +27,12 @@ class PlannerAgenda(BaseModel):
     id: int
     agenda_type: str
     name: str
-    index: int | None = None
+    index: int
+    todo_items_cnt: int = 0
+    completed_items_cnt: int = 0
+
+    class Config:
+        from_attributes = True
 
 
 # Agenda Item schemas
@@ -69,7 +64,17 @@ class PlannerAgendaItem(PlannerAgendaItemBase):
     id: int
 
 
-
-# Common schemas
 class ReorderAgendaItemsRequest(BaseModel):
     ordered_item_ids: list[int]
+
+
+class ReorderAgendasRequest(BaseModel):
+    ordered_agenda_ids: list[int]
+
+
+class CopyAgendaItemRequest(BaseModel):
+    agenda_id: int
+
+
+class MoveAgendaItemRequest(BaseModel):
+    agenda_id: int

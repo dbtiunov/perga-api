@@ -168,7 +168,7 @@ class TestPlannerDayItemService:
         assert db_item is None
 
     def test_delete_day_item(self, test_db: Session, test_user, test_day):
-        """Test that delete_day_item archives an item correctly"""
+        """Test that delete_day_item deletes an item correctly"""
         # Create an item
         item = PlannerDayItem(
             text="Test Item",
@@ -181,14 +181,14 @@ class TestPlannerDayItemService:
         test_db.commit()
         test_db.refresh(item)
         
-        # Delete (archive) the item
+        # Delete the item
         success = PlannerDayItemService.delete_day_item(test_db, item.id, test_user.id)
         assert success is True
         
-        # Check that the item was archived
+        # Check that the item was marked as deleted
         db_item = test_db.query(PlannerDayItem).filter(PlannerDayItem.id == item.id).first()
-        assert db_item.is_archived is True
-        assert db_item.archived_dt is not None
+        assert db_item.is_deleted is True
+        assert db_item.deleted_dt is not None
         
         # Try to delete a non-existent item
         success = PlannerDayItemService.delete_day_item(test_db, 999, test_user.id)

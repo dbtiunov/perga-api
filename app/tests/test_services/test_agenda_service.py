@@ -1,6 +1,6 @@
-from datetime import date
 from sqlalchemy.orm import Session
 
+from app import const
 from app.models.choices import PlannerAgendaType
 from app.models.planner import PlannerAgenda
 from app.schemas.planner_agenda import PlannerAgendaCreate, PlannerAgendaUpdate
@@ -10,32 +10,63 @@ from app.services.agenda_service import PlannerAgendaService
 class TestPlannerAgendaService:
     """Tests for the PlannerAgendaService class"""
 
+    def test_archive_and_unarchive_agenda(self, test_db: Session, test_user):
+        """Archiving CUSTOM agenda to ARCHIVED and then unarchiving back to CUSTOM"""
+        # Create a CUSTOM agenda
+        agenda = PlannerAgenda(
+            name="To Archive",
+            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
+            agenda_type=PlannerAgendaType.CUSTOM.value,
+            user_id=test_user.id
+        )
+        test_db.add(agenda)
+        test_db.commit()
+        test_db.refresh(agenda)
+
+        # Archive it (CUSTOM -> ARCHIVED)
+        update = PlannerAgendaUpdate(agenda_type=PlannerAgendaType.ARCHIVED)
+        archived = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, update, test_user.id)
+        assert archived is not None
+        assert archived.agenda_type == PlannerAgendaType.ARCHIVED.value
+        # Unchanged fields
+        assert archived.name == "To Archive"
+        assert archived.index == const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
+
+        # Unarchive it back (ARCHIVED -> CUSTOM)
+        update_back = PlannerAgendaUpdate(agenda_type=PlannerAgendaType.CUSTOM)
+        unarchived = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, update_back, test_user.id)
+        assert unarchived is not None
+        assert unarchived.agenda_type == PlannerAgendaType.CUSTOM.value
+        # Unchanged fields
+        assert unarchived.name == "To Archive"
+        assert unarchived.index == const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
+
     def test_get_new_agenda_index(self, test_db: Session, test_user):
         """Test that get_new_agenda_index returns the correct index"""
-        # When there are no agendas, index should be 0
+        # When there are no agendas, index should be 1
         index = PlannerAgendaService.get_new_agenda_index(test_db, test_user.id)
-        assert index == 0
+        assert index == const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
 
-        # Create an agenda with index 0
+        # Create an agenda with index 1
         agenda = PlannerAgenda(
             name="Test Agenda",
-            index=0,
+            index=index,
             agenda_type=PlannerAgendaType.CUSTOM.value,
             user_id=test_user.id
         )
         test_db.add(agenda)
         test_db.commit()
 
-        # Now index should be 1
+        # Now index should be 2
         index = PlannerAgendaService.get_new_agenda_index(test_db, test_user.id)
-        assert index == 1
+        assert index == 2
 
     def test_get_planner_agenda(self, test_db: Session, test_user):
         """Test that get_planner_agenda returns the correct agenda"""
         # Create an agenda
         agenda = PlannerAgenda(
             name="Test Agenda",
-            index=0,
+            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
             agenda_type=PlannerAgendaType.CUSTOM.value,
             user_id=test_user.id
         )
@@ -58,28 +89,12 @@ class TestPlannerAgendaService:
         db_agenda = PlannerAgendaService.get_planner_agenda(test_db, agenda.id, 999)
         assert db_agenda is None
 
-    def test_get_planner_agendas_by_day(self, test_db: Session, test_user):
-        """Test that get_planner_agendas_by_day returns the correct agendas"""
-        # Initially, it should create Backlog and Monthly agendas
-        today = date.today()
-        agendas = PlannerAgendaService.get_planner_agendas_by_day(test_db, test_user.id, today)
-        assert len(agendas) == 2
-        
-        # Check that one is Backlog and one is Monthly
-        agenda_types = [a.agenda_type for a in agendas]
-        assert PlannerAgendaType.BACKLOG.value in agenda_types
-        assert PlannerAgendaType.MONTHLY.value in agenda_types
-        
-        # Check that the Monthly agenda has the correct name (e.g., "January 2023")
-        monthly_agenda = next(a for a in agendas if a.agenda_type == PlannerAgendaType.MONTHLY.value)
-        assert monthly_agenda.name == today.strftime("%B %Y")
-
     def test_create_planner_agenda(self, test_db: Session, test_user):
         """Test that create_planner_agenda creates an agenda correctly"""
         # Create an agenda
         agenda_create = PlannerAgendaCreate(
             name="Test Agenda",
-            agenda_type=PlannerAgendaType.CUSTOM.value,
+            agenda_type=PlannerAgendaType.CUSTOM,
             index=None  # Should be set automatically
         )
         db_agenda = PlannerAgendaService.create_planner_agenda(test_db, agenda_create, test_user.id)
@@ -88,7 +103,7 @@ class TestPlannerAgendaService:
         assert db_agenda.id is not None
         assert db_agenda.name == "Test Agenda"
         assert db_agenda.agenda_type == PlannerAgendaType.CUSTOM.value
-        assert db_agenda.index == 0  # Should be the first agenda
+        assert db_agenda.index == const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
         assert db_agenda.user_id == test_user.id
 
     def test_update_planner_agenda(self, test_db: Session, test_user):
@@ -96,7 +111,7 @@ class TestPlannerAgendaService:
         # Create an agenda
         agenda = PlannerAgenda(
             name="Test Agenda",
-            index=0,
+            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
             agenda_type=PlannerAgendaType.CUSTOM.value,
             user_id=test_user.id
         )
@@ -123,12 +138,12 @@ class TestPlannerAgendaService:
         db_agenda = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, agenda_update, 999)
         assert db_agenda is None
 
-    def test_archive_planner_agenda(self, test_db: Session, test_user):
-        """Test that archive_planner_agenda archives an agenda correctly"""
+    def test_delete_planner_agenda(self, test_db: Session, test_user):
+        """Test that delete_planner_agenda deletes an agenda correctly"""
         # Create an agenda
         agenda = PlannerAgenda(
             name="Test Agenda",
-            index=0,
+            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
             agenda_type=PlannerAgendaType.CUSTOM.value,
             user_id=test_user.id
         )
@@ -136,21 +151,21 @@ class TestPlannerAgendaService:
         test_db.commit()
         test_db.refresh(agenda)
         
-        # Archive the agenda
-        success = PlannerAgendaService.archive_planner_agenda(test_db, agenda.id, test_user.id)
+        # Delete the agenda
+        success = PlannerAgendaService.delete_planner_agenda(test_db, agenda.id, test_user.id)
         assert success is True
         
-        # Check that the agenda was archived
+        # Check that the agenda was marked as deleted
         db_agenda = test_db.query(PlannerAgenda).filter(PlannerAgenda.id == agenda.id).first()
-        assert db_agenda.is_archived is True
-        assert db_agenda.archived_dt is not None
+        assert db_agenda.is_deleted is True
+        assert db_agenda.deleted_dt is not None
         
-        # Try to archive a non-existent agenda
-        success = PlannerAgendaService.archive_planner_agenda(test_db, 999, test_user.id)
+        # Try to delete a non-existent agenda
+        success = PlannerAgendaService.delete_planner_agenda(test_db, 999, test_user.id)
         assert success is False
         
-        # Try to archive an agenda with a different user_id
-        success = PlannerAgendaService.archive_planner_agenda(test_db, agenda.id, 999)
+        # Try to delete an agenda with a different user_id
+        success = PlannerAgendaService.delete_planner_agenda(test_db, agenda.id, 999)
         assert success is False
 
     def test_reorder_agendas(self, test_db: Session, test_user):
@@ -158,19 +173,19 @@ class TestPlannerAgendaService:
         # Create some agendas
         agenda1 = PlannerAgenda(
             name="Agenda 1",
-            index=0,
+            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
             agenda_type=PlannerAgendaType.CUSTOM.value,
             user_id=test_user.id
         )
         agenda2 = PlannerAgenda(
             name="Agenda 2",
-            index=1,
+            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN + 1,
             agenda_type=PlannerAgendaType.CUSTOM.value,
             user_id=test_user.id
         )
         agenda3 = PlannerAgenda(
             name="Agenda 3",
-            index=2,
+            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN + 2,
             agenda_type=PlannerAgendaType.CUSTOM.value,
             user_id=test_user.id
         )
@@ -188,6 +203,6 @@ class TestPlannerAgendaService:
         db_agenda1 = test_db.query(PlannerAgenda).filter(PlannerAgenda.id == agenda1.id).first()
         db_agenda2 = test_db.query(PlannerAgenda).filter(PlannerAgenda.id == agenda2.id).first()
         db_agenda3 = test_db.query(PlannerAgenda).filter(PlannerAgenda.id == agenda3.id).first()
-        assert db_agenda3.index == 0
-        assert db_agenda1.index == 1
-        assert db_agenda2.index == 2
+        assert db_agenda3.index == 1
+        assert db_agenda1.index == 2
+        assert db_agenda2.index == 3
