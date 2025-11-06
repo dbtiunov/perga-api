@@ -20,15 +20,15 @@ router = APIRouter()
 
 @router.get("/", response_model=list[PlannerAgenda])
 def get_agendas(
-    agenda_types: list[PlannerAgendaType] | None = Query(None,description="Agenda types to include: monthly, custom"),
+    agenda_types: list[PlannerAgendaType] | None = Query(
+        None, description="Agenda types to include: monthly, custom, archived"
+    ),
     day: date | None = Query(None, description="Reference day to resolve monthly agenda (defaults to today)"),
+    with_counts: bool | None = Query(False, description="Include agenda items counts"),
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
-    if not agenda_types:
-        agenda_types = [PlannerAgendaType.MONTHLY, PlannerAgendaType.CUSTOM]
-
-    agendas = PlannerAgendaService.get_planner_agendas(db, current_user.id, agenda_types, day)
+    agendas = PlannerAgendaService.get_planner_agendas(db, current_user.id, agenda_types, day, with_counts)
     return agendas
 
 

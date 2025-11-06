@@ -3,7 +3,6 @@ from enum import Enum
 from sqlalchemy.orm import Session
 
 from app.core.db_utils import atomic_transaction, TransactionRollback
-from app.models.choices import PlannerItemState
 from app.models.planner import PlannerAgendaItem
 from app.schemas.planner_agenda import PlannerAgendaItemCreate, PlannerAgendaItemUpdate
 from app.services.base_service import BaseService
@@ -130,6 +129,7 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
             user_id=user_id,
             agenda_id=agenda_id,
             text=db_item.text,
+            state=db_item.state,
             index=new_index,
         )
         db.add(new_db_item)

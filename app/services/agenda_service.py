@@ -20,7 +20,8 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
 
     @classmethod
     def get_planner_agendas(
-        cls, db: Session, user_id: int, agenda_types: list[PlannerAgendaType], day: date | None = None
+        cls, db: Session, user_id: int, agenda_types: list[PlannerAgendaType], day: date | None = None,
+        with_counts: bool = False
     ) -> list[PlannerAgenda]:
         """
         Returns list of user agendas depending on provided agenda types:
@@ -64,7 +65,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
             result_agendas.extend(archived_agendas)
 
         # Enrich agendas with counts of items per state
-        if result_agendas:
+        if result_agendas and with_counts:
             agenda_ids = [agenda.id for agenda in result_agendas]
 
             items_cnt_query = (
