@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from dateutil.relativedelta import relativedelta
 
 from sqlalchemy import func, case
@@ -150,7 +150,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
             PlannerAgendaItem.agenda_id == agenda_id
         ).update({
             'is_deleted': True,
-            'deleted_dt': datetime.now()
+            'deleted_dt': datetime.now(timezone.utc),
         })
         db_agenda.mark_as_deleted()
         db.commit()
