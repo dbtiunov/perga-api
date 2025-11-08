@@ -23,12 +23,14 @@ def get_agendas(
     agenda_types: list[PlannerAgendaType] | None = Query(
         None, description="Agenda types to include: monthly, custom, archived"
     ),
-    day: date | None = Query(None, description="Reference day to resolve monthly agenda (defaults to today)"),
+    selected_day: date | None = Query(
+        None, description="Reference day to resolve monthly agenda (defaults to today)"
+    ),
     with_counts: bool | None = Query(False, description="Include agenda items counts"),
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
-    agendas = PlannerAgendaService.get_planner_agendas(db, current_user.id, agenda_types, day, with_counts)
+    agendas = PlannerAgendaService.get_planner_agendas(db, current_user.id, agenda_types, selected_day, with_counts)
     return agendas
 
 

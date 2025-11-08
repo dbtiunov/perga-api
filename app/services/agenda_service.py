@@ -20,41 +20,37 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
 
     @classmethod
     def get_planner_agendas(
-        cls, db: Session, user_id: int, agenda_types: list[PlannerAgendaType], day: date | None = None,
+        cls, db: Session, user_id: int, agenda_types: list[PlannerAgendaType], selected_day: date | None = None,
         with_counts: bool = False
     ) -> list[PlannerAgenda]:
         """
         Returns list of user agendas depending on provided agenda types:
-        1. Monthly - current and next month
+        1. Monthly - selected month agenda
         2. Custom - active custom agendas
+        3. Archived - archived custom agendas
         """
         base_query = cls.get_base_query(db).filter(PlannerAgenda.user_id == user_id)
         result_agendas = []
 
         if PlannerAgendaType.MONTHLY in agenda_types:
-            if not day:
-                day = datetime.today()
+            if not selected_day:
+                selected_day = datetime.today()
 
-            current_month_name = day.strftime("%B %Y")
-            next_month_name = (day.replace(day=1) + relativedelta(months=1)).strftime("%B %Y")
-            month_names = [current_month_name, next_month_name]
-            month_agendas = base_query.filter(
+            selected_month_name = selected_day.strftime("%B %Y")
+            selected_month_agenda = base_query.filter(
                 PlannerAgenda.agenda_type == PlannerAgendaType.MONTHLY.value,
-                PlannerAgenda.name.in_(month_names)
-            ).all()
+                PlannerAgenda.name == selected_month_name
+            ).first()
 
             # Ensure that month agenda exists
-            for month_name in month_names:
-                try:
-                    month_agenda = [agenda for agenda in month_agendas if agenda.name == month_name][0]
-                except IndexError:
-                    agenda_create = PlannerAgendaCreate(
-                        name=month_name,
-                        agenda_type=PlannerAgendaType.MONTHLY,
-                        index=const.PLANNER_MONTHLY_AGENDA_INDEX
-                    )
-                    month_agenda = cls.create_planner_agenda(db, agenda_create, user_id)
-                result_agendas.append(month_agenda)
+            if not selected_month_agenda:
+                agenda_create = PlannerAgendaCreate(
+                    name=selected_month_name,
+                    agenda_type=PlannerAgendaType.MONTHLY,
+                    index=const.PLANNER_MONTHLY_AGENDA_INDEX
+                )
+                selected_month_agenda = cls.create_planner_agenda(db, agenda_create, user_id)
+            result_agendas.append(selected_month_agenda)
 
         if PlannerAgendaType.CUSTOM in agenda_types:
             custom_agendas = base_query.filter(PlannerAgenda.agenda_type == PlannerAgendaType.CUSTOM.value).all()
