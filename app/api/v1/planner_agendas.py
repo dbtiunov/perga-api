@@ -274,11 +274,13 @@ def planner_agenda_action(
         raise HTTPException(status_code=404, detail="Planner agenda not found")
 
     if request.action == AgendaAction.ACTION_MARK_ALL_ITEMS_AS_COMPLETED:
-        PlannerAgendaService.complete_all_items(db, agenda_id=agenda_id, user_id=current_user.id)
+        PlannerAgendaItemService.complete_all_agenda_items(db, agenda_id=agenda_id, user_id=current_user.id)
     elif request.action == AgendaAction.ACTION_DELETE_COMPLETED_ITEMS:
-        PlannerAgendaService.delete_completed_items(db, agenda_id=agenda_id, user_id=current_user.id)
+        PlannerAgendaItemService.delete_completed_agenda_items(db, agenda_id=agenda_id, user_id=current_user.id)
     elif request.action == AgendaAction.ACTION_SORT_ITEMS_BY_COMPLETION:
-        success = PlannerAgendaService.sort_items_by_completion(db, agenda_id=agenda_id, user_id=current_user.id)
+        success = PlannerAgendaItemService.sort_agenda_items_by_completion(
+            db, agenda_id=agenda_id, user_id=current_user.id
+        )
         if not success:
             raise HTTPException(status_code=400, detail="Failed to sort items")
     else:

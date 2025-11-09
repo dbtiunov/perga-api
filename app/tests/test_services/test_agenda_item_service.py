@@ -131,7 +131,6 @@ class TestPlannerAgendaItemService:
         # Create an item
         item_create = PlannerAgendaItemCreate(
             text="Test Item",
-            state=PlannerItemState.TODO.value,
             agenda_id=test_agenda.id
         )
         db_item = PlannerAgendaItemService.create_planner_item(test_db, item_create, test_user.id)
@@ -161,7 +160,7 @@ class TestPlannerAgendaItemService:
         # Update the item
         item_update = PlannerAgendaItemUpdate(
             text="Updated Item",
-            state=PlannerItemState.COMPLETED.value
+            state=PlannerItemState.COMPLETED
         )
         db_item = PlannerAgendaItemService.update_planner_item(test_db, item.id, item_update, test_user.id)
         
@@ -251,3 +250,75 @@ class TestPlannerAgendaItemService:
         assert db_item3.index == 0
         assert db_item1.index == 1
         assert db_item2.index == 2
+
+
+    def test_complete_all_items(self, test_db: Session, test_user, test_agenda):
+        """All non-deleted items should become COMPLETED; deleted items stay unchanged"""
+        # Prepare data: 4 items in various states + one already deleted
+        items = [
+            PlannerAgendaItem(text="t1", index=0, state=PlannerItemState.TODO.value, user_id=test_user.id, agenda_id=test_agenda.id),
+            PlannerAgendaItem(text="t2", index=1, state=PlannerItemState.SNOOZED.value, user_id=test_user.id, agenda_id=test_agenda.id),
+            PlannerAgendaItem(text="t3", index=2, state=PlannerItemState.DROPPED.value, user_id=test_user.id, agenda_id=test_agenda.id),
+            PlannerAgendaItem(text="t4", index=3, state=PlannerItemState.COMPLETED.value, user_id=test_user.id, agenda_id=test_agenda.id),
+            PlannerAgendaItem(text="t5", index=4, state=PlannerItemState.TODO.value, user_id=test_user.id, agenda_id=test_agenda.id),
+        ]
+        test_db.add_all(items)
+        test_db.commit()
+        # Soft delete the last one to ensure it isn't affected
+        items[-1].mark_as_deleted()
+        test_db.commit()
+
+        success = PlannerAgendaItemService.complete_all_agenda_items(test_db, test_agenda.id, test_user.id)
+        assert success is True
+
+        # Verify non-deleted items are completed
+        refreshed = test_db.query(PlannerAgendaItem).filter(PlannerAgendaItem.agenda_id == test_agenda.id).order_by(PlannerAgendaItem.index).all()
+        assert refreshed[0].state == PlannerItemState.COMPLETED.value
+        assert refreshed[1].state == PlannerItemState.COMPLETED.value
+        assert refreshed[2].state == PlannerItemState.COMPLETED.value
+        assert refreshed[3].state == PlannerItemState.COMPLETED.value
+        # The deleted one remains as-is (state may remain TODO but is_deleted is True)
+        assert refreshed[4].is_deleted is True
+
+    def test_delete_completed_items(self, test_db: Session, test_user, test_agenda):
+        """Only COMPLETED items should be soft-deleted"""
+        items = [
+            PlannerAgendaItem(text="t1", index=0, state=PlannerItemState.TODO.value, user_id=test_user.id, agenda_id=test_agenda.id),
+            PlannerAgendaItem(text="t2", index=1, state=PlannerItemState.COMPLETED.value, user_id=test_user.id, agenda_id=test_agenda.id),
+            PlannerAgendaItem(text="t3", index=2, state=PlannerItemState.SNOOZED.value, user_id=test_user.id, agenda_id=test_agenda.id),
+            PlannerAgendaItem(text="t4", index=3, state=PlannerItemState.COMPLETED.value, user_id=test_user.id, agenda_id=test_agenda.id),
+        ]
+        test_db.add_all(items)
+        test_db.commit()
+
+        success = PlannerAgendaItemService.delete_completed_agenda_items(test_db, test_agenda.id, test_user.id)
+        assert success is True
+
+        refreshed = test_db.query(PlannerAgendaItem).filter(PlannerAgendaItem.agenda_id == test_agenda.id).order_by(PlannerAgendaItem.index).all()
+        assert refreshed[0].is_deleted is False
+        assert refreshed[1].is_deleted is True and refreshed[1].deleted_dt is not None
+        assert refreshed[2].is_deleted is False
+        assert refreshed[3].is_deleted is True and refreshed[3].deleted_dt is not None
+
+    def test_sort_items_by_completion(self, test_db: Session, test_user, test_agenda):
+        """Completed, snoozed, dropped, todo order; stable within groups"""
+        # Original order by index: A(todo), B(completed), C(todo), D(snoozed), E(completed), F(dropped)
+        a = PlannerAgendaItem(text="A", index=0, state=PlannerItemState.TODO.value, user_id=test_user.id, agenda_id=test_agenda.id)
+        b = PlannerAgendaItem(text="B", index=1, state=PlannerItemState.COMPLETED.value, user_id=test_user.id, agenda_id=test_agenda.id)
+        c = PlannerAgendaItem(text="C", index=2, state=PlannerItemState.TODO.value, user_id=test_user.id, agenda_id=test_agenda.id)
+        d = PlannerAgendaItem(text="D", index=3, state=PlannerItemState.SNOOZED.value, user_id=test_user.id, agenda_id=test_agenda.id)
+        e = PlannerAgendaItem(text="E", index=4, state=PlannerItemState.COMPLETED.value, user_id=test_user.id, agenda_id=test_agenda.id)
+        f = PlannerAgendaItem(text="F", index=5, state=PlannerItemState.DROPPED.value, user_id=test_user.id, agenda_id=test_agenda.id)
+        test_db.add_all([a, b, c, d, e, f])
+        test_db.commit()
+
+        success = PlannerAgendaItemService.sort_agenda_items_by_completion(test_db, test_agenda.id, test_user.id)
+        assert success is True
+
+        # Fetch by new index order
+        ordered = test_db.query(PlannerAgendaItem).filter(PlannerAgendaItem.agenda_id == test_agenda.id).order_by(PlannerAgendaItem.index).all()
+        # Expect completed first (B, E), then snoozed (D), then dropped (F), then todo (A, C)
+        texts_by_index = [it.text for it in ordered]
+        assert texts_by_index == ["B", "E", "D", "F", "A", "C"]
+        # Stability check within completed group: original order was B (idx1) before E (idx4)
+        assert ordered[0].text == "B" and ordered[1].text == "E"

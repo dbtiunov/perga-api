@@ -1,8 +1,10 @@
 import logging
+from datetime import datetime, timezone
 from enum import Enum
 from sqlalchemy.orm import Session
 
 from app.core.db_utils import atomic_transaction, TransactionRollback
+from app.models.choices import PlannerItemState
 from app.models.planner import PlannerAgendaItem
 from app.schemas.planner_agenda import PlannerAgendaItemCreate, PlannerAgendaItemUpdate
 from app.services.base_service import BaseService
@@ -141,3 +143,51 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
 
         db.refresh(new_db_item)
         return new_db_item
+
+    @classmethod
+    def complete_all_agenda_items(cls, db: Session, agenda_id: int, user_id: int) -> bool:
+        """ Marks all non-deleted items in agenda as completed """
+        cls.get_base_query(db).filter(
+            PlannerAgendaItem.user_id == user_id,
+            PlannerAgendaItem.agenda_id == agenda_id,
+            PlannerAgendaItem.state != PlannerItemState.COMPLETED.value,
+        ).update({"state": PlannerItemState.COMPLETED.value}, synchronize_session=False)
+        db.commit()
+        return True
+
+    @classmethod
+    def delete_completed_agenda_items(cls, db: Session, agenda_id: int, user_id: int) -> bool:
+        """ Marks all completed items in agenda as deleted """
+        cls.get_base_query(db).filter(
+            PlannerAgendaItem.user_id == user_id,
+            PlannerAgendaItem.agenda_id == agenda_id,
+            PlannerAgendaItem.state == PlannerItemState.COMPLETED.value,
+        ).update({
+            "is_deleted": True,
+            "deleted_dt": datetime.now(timezone.utc),
+        }, synchronize_session=False)
+        db.commit()
+        return True
+
+    @classmethod
+    def sort_agenda_items_by_completion(cls, db: Session, agenda_id: int, user_id: int) -> bool:
+        """ Reorders items so that completed come first, keeping relative order within groups """
+        try:
+            with atomic_transaction(db):
+                items = cls.get_base_query(db).filter(
+                    PlannerAgendaItem.user_id == user_id,
+                    PlannerAgendaItem.agenda_id == agenda_id,
+                ).order_by(PlannerAgendaItem.index).all()
+
+                completed_items = [item for item in items if item.state == PlannerItemState.COMPLETED.value]
+                snoozed_items = [item for item in items if item.state == PlannerItemState.SNOOZED.value]
+                dropped_items = [item for item in items if item.state == PlannerItemState.DROPPED.value]
+                todo_items = [item for item in items if item.state == PlannerItemState.TODO.value]
+
+                for index, item in enumerate(completed_items + snoozed_items + dropped_items + todo_items):
+                    item.index = index
+        except TransactionRollback as e:
+            logger.warning(f'sort_items_by_completion: {str(e)}')
+            return False
+
+        return True

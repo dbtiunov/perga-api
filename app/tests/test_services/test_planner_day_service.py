@@ -116,7 +116,6 @@ class TestPlannerDayItemService:
         # Create an item
         item_create = PlannerDayItemCreate(
             text="Test Item",
-            state=PlannerItemState.TODO.value,
             day=test_day
         )
         db_item = PlannerDayItemService.create_day_item(test_db, item_create, test_user.id)
@@ -147,7 +146,7 @@ class TestPlannerDayItemService:
         tomorrow = test_day + timedelta(days=1)
         item_update = PlannerDayItemUpdate(
             text="Updated Item",
-            state=PlannerItemState.COMPLETED.value,
+            state=PlannerItemState.COMPLETED,
             day=tomorrow
         )
         db_item = PlannerDayItemService.update_day_item(test_db, item.id, item_update, test_user.id)
