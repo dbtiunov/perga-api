@@ -1,4 +1,3 @@
-from enum import Enum
 from sqlalchemy.orm import Session
 
 from app.models.user import User
@@ -53,8 +52,6 @@ class UserService(BaseService[User]):
 
         update_data = user_in.model_dump(exclude_unset=True)
         for field, new_value in update_data.items():
-            if isinstance(new_value, Enum):
-                new_value = new_value.value
             setattr(db_user, field, new_value)
         db.commit()
 

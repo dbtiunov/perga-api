@@ -2,7 +2,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.models.choices import PlannerAgendaType
+from app.const import PlannerAgendaType, PlannerAgendaAction
 from app.services.auth_service import AuthService
 from app.core.database import get_db
 from app.schemas.planner_agenda import (
@@ -10,7 +10,7 @@ from app.schemas.planner_agenda import (
     PlannerAgendaItem, PlannerAgendaItemCreate, PlannerAgendaItemUpdate,
     ReorderAgendaItemsRequest, ReorderAgendasRequest,
     CopyAgendaItemRequest, MoveAgendaItemRequest,
-    PlannerAgendaActionRequest, AgendaAction,
+    PlannerAgendaActionRequest,
 )
 from app.services.agenda_service import PlannerAgendaService
 from app.services.agenda_item_service import PlannerAgendaItemService
@@ -54,7 +54,7 @@ def update_planner_agenda(
 ):
     # validate agenda_type for archive/unarchive actions
     if agenda_item.agenda_type and agenda_item.agenda_type not in [
-        PlannerAgendaType.ARCHIVED.value, PlannerAgendaType.CUSTOM.value
+        PlannerAgendaType.ARCHIVED, PlannerAgendaType.CUSTOM
     ]:
         raise HTTPException(status_code=400, detail="Bad request")
 
@@ -119,7 +119,7 @@ def create_planner_agenda_item(
     if not db_agenda:
         raise HTTPException(status_code=404, detail="Planner agenda not found")
 
-    return PlannerAgendaItemService.create_planner_item(db=db, item=item, user_id=current_user.id)
+    return PlannerAgendaItemService.create_agenda_item(db=db, item=item, user_id=current_user.id)
 
 
 @router.put("/items/{item_id}/", response_model=PlannerAgendaItem)
@@ -130,7 +130,7 @@ def update_planner_agenda_item(
     current_user: User = Depends(AuthService.get_current_user)
 ):
     # First check if the item exists and belongs to the current user
-    db_item = PlannerAgendaItemService.get_planner_item(db, item_id=item_id, user_id=current_user.id)
+    db_item = PlannerAgendaItemService.get_agenda_item(db, item_id=item_id, user_id=current_user.id)
     if not db_item:
         raise HTTPException(status_code=404, detail="Planner agenda item not found")
 
@@ -141,7 +141,7 @@ def update_planner_agenda_item(
             raise HTTPException(status_code=404, detail="Target planner agenda not found")
 
     # Then update the item
-    db_item = PlannerAgendaItemService.update_planner_item(db, item_id=item_id, item=item, user_id=current_user.id)
+    db_item = PlannerAgendaItemService.update_agenda_item(db, item_id=item_id, item=item, user_id=current_user.id)
     return db_item
 
 
@@ -152,12 +152,12 @@ def delete_planner_agenda_item(
     current_user: User = Depends(AuthService.get_current_user)
 ):
     # First check if the item exists and belongs to the current user
-    db_item = PlannerAgendaItemService.get_planner_item(db, item_id=item_id, user_id=current_user.id)
+    db_item = PlannerAgendaItemService.get_agenda_item(db, item_id=item_id, user_id=current_user.id)
     if not db_item:
         raise HTTPException(status_code=404, detail="Planner agenda item not found")
 
     # Then delete it
-    success = PlannerAgendaItemService.delete_planner_item(db, item_id=item_id, user_id=current_user.id)
+    success = PlannerAgendaItemService.delete_agenda_item(db, item_id=item_id, user_id=current_user.id)
     if not success:
         raise HTTPException(status_code=500, detail="Failed to delete planner agenda item")
     return {"detail": "Planner agenda item deleted successfully"}
@@ -171,12 +171,12 @@ def reorder_agenda_items(
 ):
     # First verify all items belong to the current user
     for item_id in request.ordered_item_ids:
-        db_item = PlannerAgendaItemService.get_planner_item(db, item_id=item_id, user_id=current_user.id)
+        db_item = PlannerAgendaItemService.get_agenda_item(db, item_id=item_id, user_id=current_user.id)
         if not db_item:
             raise HTTPException(status_code=404, detail=f"Planner agenda item with id {item_id} not found")
 
     # Then reorder them
-    success = PlannerAgendaItemService.reorder_items(db, request.ordered_item_ids, user_id=current_user.id)
+    success = PlannerAgendaItemService.reorder_agenda_items(db, request.ordered_item_ids, user_id=current_user.id)
     if not success:
         raise HTTPException(status_code=400, detail="Failed to reorder agenda items")
     return {"detail": "Agenda items reordered successfully"}
@@ -196,7 +196,7 @@ def get_planner_items_by_agendas(
             continue
 
         # Get items for this agenda
-        items = PlannerAgendaItemService.get_planner_items_by_agendas(db, agenda_id, user_id=current_user.id)
+        items = PlannerAgendaItemService.get_items_by_agendas(db, agenda_id, user_id=current_user.id)
         result[agenda_id] = items
 
     return result
@@ -210,7 +210,7 @@ def copy_planner_agenda_item(
     current_user: User = Depends(AuthService.get_current_user)
 ):
     # Check that the item exists and belongs to the current user
-    db_item = PlannerAgendaItemService.get_planner_item(db, item_id=item_id, user_id=current_user.id)
+    db_item = PlannerAgendaItemService.get_agenda_item(db, item_id=item_id, user_id=current_user.id)
     if not db_item:
         raise HTTPException(status_code=404, detail="Planner agenda item not found")
 
@@ -235,7 +235,7 @@ def move_planner_agenda_item(
     current_user: User = Depends(AuthService.get_current_user)
 ):
     # Check that the item exists and belongs to the current user
-    db_item = PlannerAgendaItemService.get_planner_item(db, item_id=item_id, user_id=current_user.id)
+    db_item = PlannerAgendaItemService.get_agenda_item(db, item_id=item_id, user_id=current_user.id)
     if not db_item:
         raise HTTPException(status_code=404, detail="Planner agenda item not found")
 
@@ -260,25 +260,16 @@ def planner_agenda_action(
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
-    """
-    Unified agenda-level action endpoint.
-
-    Supported actions:
-    - ACTION_MARK_AS_COMPLETED: mark all items as completed
-    - ACTION_DELETED_COMPLETED: delete all completed items (soft delete)
-    - ACTION_SORT_BY_COMPLETION: reorder items with completed first
-    """
+    """ Unified agenda-level action endpoint. Supported actions: delete_finished_items, sort_items_by_state. """
     # Verify agenda belongs to current user
     db_agenda = PlannerAgendaService.get_planner_agenda(db, agenda_id=agenda_id, user_id=current_user.id)
     if not db_agenda:
         raise HTTPException(status_code=404, detail="Planner agenda not found")
 
-    if request.action == AgendaAction.ACTION_MARK_ALL_ITEMS_AS_COMPLETED:
-        PlannerAgendaItemService.complete_all_agenda_items(db, agenda_id=agenda_id, user_id=current_user.id)
-    elif request.action == AgendaAction.ACTION_DELETE_COMPLETED_ITEMS:
-        PlannerAgendaItemService.delete_completed_agenda_items(db, agenda_id=agenda_id, user_id=current_user.id)
-    elif request.action == AgendaAction.ACTION_SORT_ITEMS_BY_COMPLETION:
-        success = PlannerAgendaItemService.sort_agenda_items_by_completion(
+    if request.action == PlannerAgendaAction.DELETE_FINISHED_ITEMS:
+        PlannerAgendaItemService.delete_finished_agenda_items(db, agenda_id=agenda_id, user_id=current_user.id)
+    elif request.action == PlannerAgendaAction.SORT_ITEMS_BY_STATE:
+        success = PlannerAgendaItemService.sort_agenda_items_by_state(
             db, agenda_id=agenda_id, user_id=current_user.id
         )
         if not success:

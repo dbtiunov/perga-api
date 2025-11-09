@@ -1,11 +1,10 @@
 import logging
 from datetime import date
-from enum import Enum
 
 from sqlalchemy.orm import Session
 
+from app.const import PlannerItemState
 from app.core.db_utils import atomic_transaction, TransactionRollback
-from app.models.choices import PlannerItemState
 from app.models.planner import PlannerDayItem
 from app.schemas.planner_day import PlannerDayItemCreate, PlannerDayItemUpdate
 from app.services.base_service import BaseService
@@ -62,8 +61,6 @@ class PlannerDayItemService(BaseService[PlannerDayItem]):
 
         update_data = item.model_dump(exclude_unset=True)
         for field, new_value in update_data.items():
-            if isinstance(new_value, Enum):
-                new_value = new_value.value
             setattr(db_item, field, new_value)
         db.commit()
 
@@ -125,16 +122,20 @@ class PlannerDayItemService(BaseService[PlannerDayItem]):
         if not db_item:
             return None
 
-        db_item.state = PlannerItemState.SNOOZED.value
+        try:
+            with atomic_transaction(db):
+                db_item.state = PlannerItemState.SNOOZED
 
-        new_index = cls.get_new_item_index(db, day, user_id)
-        new_db_item = PlannerDayItem(
-            user_id=user_id,
-            day=day,
-            text=db_item.text,
-            index=new_index,
-        )
-        db.add(new_db_item)
-        db.commit()
+                new_index = cls.get_new_item_index(db, day, user_id)
+                new_db_item = PlannerDayItem(
+                    user_id=user_id,
+                    day=day,
+                    text=db_item.text,
+                    index=new_index,
+                )
+                db.add(new_db_item)
+        except TransactionRollback as e:
+            logger.warning(f'snooze_day_item: {str(e)}')
+            return None
 
         return new_db_item

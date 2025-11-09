@@ -1,8 +1,8 @@
 from sqlalchemy import Column, String, Boolean
 from sqlalchemy.orm import relationship
 
+from app import const
 from app.models.base import BaseModel
-from app.models.choices import WeekStartDay
 
 
 __all__ = (
@@ -17,7 +17,7 @@ class User(BaseModel):
     email = Column(String(length=64), unique=True, index=True, nullable=False)
     hashed_password = Column(String(length=128), nullable=False)
     is_active = Column(Boolean, default=True)
-    week_start_day = Column(String(length=32), default=WeekStartDay.SUNDAY.value, nullable=False)
+    week_start_day = Column(String(length=32), default=const.WeekStartDay.SUNDAY, nullable=False)
 
     # Relationships
     planner_agendas = relationship("PlannerAgenda", back_populates="user")

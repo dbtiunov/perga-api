@@ -4,9 +4,8 @@ from datetime import datetime, date, timezone
 from sqlalchemy import func, case
 from sqlalchemy.orm import Session
 
-from app import const
+from app.const import PlannerAgendaType, PlannerItemState, PLANNER_CUSTOM_AGENDA_INDEX_MIN, PLANNER_MONTHLY_AGENDA_INDEX
 from app.core.db_utils import atomic_transaction, TransactionRollback
-from app.models.choices import PlannerAgendaType, PlannerItemState
 from app.models.planner import PlannerAgenda, PlannerAgendaItem
 from app.schemas.planner_agenda import PlannerAgendaCreate, PlannerAgendaUpdate
 from app.services.base_service import BaseService
@@ -37,7 +36,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
 
             selected_month_name = selected_day.strftime("%B %Y")
             selected_month_agenda = base_query.filter(
-                PlannerAgenda.agenda_type == PlannerAgendaType.MONTHLY.value,
+                PlannerAgenda.agenda_type == PlannerAgendaType.MONTHLY,
                 PlannerAgenda.name == selected_month_name
             ).first()
 
@@ -46,19 +45,19 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
                 agenda_create = PlannerAgendaCreate(
                     name=selected_month_name,
                     agenda_type=PlannerAgendaType.MONTHLY,
-                    index=const.PLANNER_MONTHLY_AGENDA_INDEX
+                    index=PLANNER_MONTHLY_AGENDA_INDEX
                 )
                 selected_month_agenda = cls.create_planner_agenda(db, agenda_create, user_id)
             result_agendas.append(selected_month_agenda)
 
         if PlannerAgendaType.CUSTOM in agenda_types:
             custom_agendas = base_query.filter(
-                PlannerAgenda.agenda_type == PlannerAgendaType.CUSTOM.value
+                PlannerAgenda.agenda_type == PlannerAgendaType.CUSTOM
             ).order_by(PlannerAgenda.index).all()
             result_agendas.extend(custom_agendas)
 
         if PlannerAgendaType.ARCHIVED in agenda_types:
-            archived_agendas = base_query.filter(PlannerAgenda.agenda_type == PlannerAgendaType.ARCHIVED.value).all()
+            archived_agendas = base_query.filter(PlannerAgenda.agenda_type == PlannerAgendaType.ARCHIVED).all()
             result_agendas.extend(archived_agendas)
 
         # Enrich agendas with counts of items per state
@@ -68,10 +67,10 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
             items_cnt_query = db.query(
                 PlannerAgendaItem.agenda_id,
                 func.sum(
-                    case((PlannerAgendaItem.state == PlannerItemState.TODO.value, 1), else_=0)
+                    case((PlannerAgendaItem.state == PlannerItemState.TODO, 1), else_=0)
                 ).label('todo_cnt'),
                 func.sum(
-                    case((PlannerAgendaItem.state == PlannerItemState.COMPLETED.value, 1), else_=0)
+                    case((PlannerAgendaItem.state == PlannerItemState.COMPLETED, 1), else_=0)
                 ).label('completed_cnt'),
             ).filter(
                 PlannerAgendaItem.agenda_id.in_(agenda_ids),
@@ -92,7 +91,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
     def get_new_agenda_index(cls, db: Session, user_id) -> int:
         query = cls.get_base_query(db).filter(PlannerAgenda.user_id == user_id)
         max_index_agenda = query.order_by(PlannerAgenda.index.desc()).first()
-        return max_index_agenda.index + 1 if max_index_agenda else const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
+        return max_index_agenda.index + 1 if max_index_agenda else PLANNER_CUSTOM_AGENDA_INDEX_MIN
 
     @classmethod
     def get_planner_agenda(cls, db: Session, agenda_id: int, user_id: int) -> PlannerAgenda | None:
@@ -155,7 +154,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
 
     @classmethod
     def reorder_agendas(cls, db: Session, ordered_agenda_ids: list[int], user_id: int) -> bool:
-        new_index = const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
+        new_index = PLANNER_CUSTOM_AGENDA_INDEX_MIN
 
         try:
             with atomic_transaction(db):

@@ -1,8 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel
 
-from enum import Enum
-from app.models.choices import PlannerItemState, PlannerAgendaType
+from app.const import PlannerAgendaType, PlannerItemState, PlannerAgendaAction
 from app.schemas.planner_day import BasePlannerItemBase
 
 
@@ -11,17 +10,11 @@ class PlannerAgendaCreate(BaseModel):
     name: str
     index: int | None = None
 
-    class Config:
-        use_enum_values = True
-
 
 class PlannerAgendaUpdate(BaseModel):
     name: str | None = None
     index: int | None = None
     agenda_type: PlannerAgendaType | None = None
-
-    class Config:
-        use_enum_values = True
 
 
 class PlannerAgenda(BaseModel):
@@ -81,12 +74,5 @@ class MoveAgendaItemRequest(BaseModel):
     agenda_id: int
 
 
-# Unified agenda-level action request
-class AgendaAction(str, Enum):
-    ACTION_MARK_ALL_ITEMS_AS_COMPLETED = "mark_all_items_as_completed"
-    ACTION_DELETE_COMPLETED_ITEMS = "delete_completed_items"
-    ACTION_SORT_ITEMS_BY_COMPLETION = "sort_items_by_completion"
-
-
 class PlannerAgendaActionRequest(BaseModel):
-    action: AgendaAction
+    action: PlannerAgendaAction

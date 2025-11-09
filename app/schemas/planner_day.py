@@ -1,7 +1,7 @@
 from datetime import date
 from pydantic import BaseModel
 
-from app.models.choices import PlannerItemState
+from app.const import PlannerItemState
 
 
 # Base schemas for planner items
@@ -9,9 +9,6 @@ class BasePlannerItemBase(BaseModel):
     text: str
     index: int
     state: PlannerItemState
-
-    class Config:
-        use_enum_values = True
 
 
 class PlannerDayItemBase(BasePlannerItemBase):

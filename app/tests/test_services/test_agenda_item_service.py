@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.orm import Session
 
-from app.models.choices import PlannerItemState
+from app.const import PlannerItemState
 from app.models.planner import PlannerAgenda, PlannerAgendaItem
 from app.schemas.planner_agenda import PlannerAgendaItemCreate, PlannerAgendaItemUpdate
 from app.services.agenda_item_service import PlannerAgendaItemService
@@ -24,17 +24,17 @@ class TestPlannerAgendaItemService:
         test_db.refresh(agenda)
         return agenda
 
-    def test_get_new_item_index(self, test_db: Session, test_user, test_agenda):
+    def test_get_new_agenda_item_index(self, test_db: Session, test_user, test_agenda):
         """Test that get_new_item_index returns the correct index"""
         # When there are no items, index should be 0
-        index = PlannerAgendaItemService.get_new_item_index(test_db, test_agenda.id, test_user.id)
+        index = PlannerAgendaItemService.get_new_agenda_item_index(test_db, test_agenda.id, test_user.id)
         assert index == 0
 
         # Create an item with index 0
         item = PlannerAgendaItem(
             text="Test Item",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             agenda_id=test_agenda.id
         )
@@ -42,16 +42,16 @@ class TestPlannerAgendaItemService:
         test_db.commit()
 
         # Now index should be 1
-        index = PlannerAgendaItemService.get_new_item_index(test_db, test_agenda.id, test_user.id)
+        index = PlannerAgendaItemService.get_new_agenda_item_index(test_db, test_agenda.id, test_user.id)
         assert index == 1
 
-    def test_get_planner_item(self, test_db: Session, test_user, test_agenda):
-        """Test that get_planner_item returns the correct item"""
+    def test_get_agenda_item(self, test_db: Session, test_user, test_agenda):
+        """Test that get_agenda_item returns the correct item"""
         # Create an item
         item = PlannerAgendaItem(
             text="Test Item",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             agenda_id=test_agenda.id
         )
@@ -60,34 +60,34 @@ class TestPlannerAgendaItemService:
         test_db.refresh(item)
 
         # Get the item
-        db_item = PlannerAgendaItemService.get_planner_item(test_db, item.id, test_user.id)
+        db_item = PlannerAgendaItemService.get_agenda_item(test_db, item.id, test_user.id)
         assert db_item is not None
         assert db_item.id == item.id
         assert db_item.text == "Test Item"
-        assert db_item.state == PlannerItemState.TODO.value
+        assert db_item.state == PlannerItemState.TODO
 
         # Try to get a non-existent item
-        db_item = PlannerAgendaItemService.get_planner_item(test_db, 999, test_user.id)
+        db_item = PlannerAgendaItemService.get_agenda_item(test_db, 999, test_user.id)
         assert db_item is None
 
         # Try to get an item with a different user_id
-        db_item = PlannerAgendaItemService.get_planner_item(test_db, item.id, 999)
+        db_item = PlannerAgendaItemService.get_agenda_item(test_db, item.id, 999)
         assert db_item is None
 
-    def test_get_planner_items_by_agendas(self, test_db: Session, test_user, test_agenda):
-        """Test that get_planner_items_by_agendas returns the correct items"""
+    def test_get_items_by_agendas(self, test_db: Session, test_user, test_agenda):
+        """Test that get_items_by_agendas returns the correct items"""
         # Create some items
         item1 = PlannerAgendaItem(
             text="Item 1",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             agenda_id=test_agenda.id
         )
         item2 = PlannerAgendaItem(
             text="Item 2",
             index=1,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             agenda_id=test_agenda.id
         )
@@ -95,7 +95,7 @@ class TestPlannerAgendaItemService:
         test_db.commit()
 
         # Get the items
-        items = PlannerAgendaItemService.get_planner_items_by_agendas(test_db, test_agenda.id, test_user.id)
+        items = PlannerAgendaItemService.get_items_by_agendas(test_db, test_agenda.id, test_user.id)
         assert len(items) == 2
         assert items[0].text == "Item 1"
         assert items[1].text == "Item 2"
@@ -114,7 +114,7 @@ class TestPlannerAgendaItemService:
         item3 = PlannerAgendaItem(
             text="Item 3",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             agenda_id=agenda2.id
         )
@@ -122,34 +122,34 @@ class TestPlannerAgendaItemService:
         test_db.commit()
 
         # Get items for the second agenda
-        items = PlannerAgendaItemService.get_planner_items_by_agendas(test_db, agenda2.id, test_user.id)
+        items = PlannerAgendaItemService.get_items_by_agendas(test_db, agenda2.id, test_user.id)
         assert len(items) == 1
         assert items[0].text == "Item 3"
 
-    def test_create_planner_item(self, test_db: Session, test_user, test_agenda):
-        """Test that create_planner_item creates an item correctly"""
+    def test_create_agenda_item(self, test_db: Session, test_user, test_agenda):
+        """Test that create_agenda_item creates an item correctly"""
         # Create an item
         item_create = PlannerAgendaItemCreate(
             text="Test Item",
             agenda_id=test_agenda.id
         )
-        db_item = PlannerAgendaItemService.create_planner_item(test_db, item_create, test_user.id)
+        db_item = PlannerAgendaItemService.create_agenda_item(test_db, item_create, test_user.id)
         
         # Check that the item was created correctly
         assert db_item.id is not None
         assert db_item.text == "Test Item"
-        assert db_item.state == PlannerItemState.TODO.value
+        assert db_item.state == PlannerItemState.TODO
         assert db_item.index == 0  # Should be the first item
         assert db_item.user_id == test_user.id
         assert db_item.agenda_id == test_agenda.id
 
-    def test_update_planner_item(self, test_db: Session, test_user, test_agenda):
-        """Test that update_planner_item updates an item correctly"""
+    def test_update_agenda_item(self, test_db: Session, test_user, test_agenda):
+        """Test that update_agenda_item updates an item correctly"""
         # Create an item
         item = PlannerAgendaItem(
             text="Test Item",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             agenda_id=test_agenda.id
         )
@@ -162,29 +162,29 @@ class TestPlannerAgendaItemService:
             text="Updated Item",
             state=PlannerItemState.COMPLETED
         )
-        db_item = PlannerAgendaItemService.update_planner_item(test_db, item.id, item_update, test_user.id)
+        db_item = PlannerAgendaItemService.update_agenda_item(test_db, item.id, item_update, test_user.id)
         
         # Check that the item was updated correctly
         assert db_item.id == item.id
         assert db_item.text == "Updated Item"
-        assert db_item.state == PlannerItemState.COMPLETED.value
+        assert db_item.state == PlannerItemState.COMPLETED
         assert db_item.index == 0  # Unchanged
         
         # Try to update a non-existent item
-        db_item = PlannerAgendaItemService.update_planner_item(test_db, 999, item_update, test_user.id)
+        db_item = PlannerAgendaItemService.update_agenda_item(test_db, 999, item_update, test_user.id)
         assert db_item is None
         
         # Try to update an item with a different user_id
-        db_item = PlannerAgendaItemService.update_planner_item(test_db, item.id, item_update, 999)
+        db_item = PlannerAgendaItemService.update_agenda_item(test_db, item.id, item_update, 999)
         assert db_item is None
 
-    def test_delete_planner_item(self, test_db: Session, test_user, test_agenda):
-        """Test that delete_planner_item deletes an item correctly"""
+    def test_delete_agenda_item(self, test_db: Session, test_user, test_agenda):
+        """Test that delete_agenda_item deletes an item correctly"""
         # Create an item
         item = PlannerAgendaItem(
             text="Test Item",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             agenda_id=test_agenda.id
         )
@@ -193,7 +193,7 @@ class TestPlannerAgendaItemService:
         test_db.refresh(item)
         
         # Delete the item
-        success = PlannerAgendaItemService.delete_planner_item(test_db, item.id, test_user.id)
+        success = PlannerAgendaItemService.delete_agenda_item(test_db, item.id, test_user.id)
         assert success is True
         
         # Check that the item was marked as deleted
@@ -202,34 +202,34 @@ class TestPlannerAgendaItemService:
         assert db_item.deleted_dt is not None
         
         # Try to delete a non-existent item
-        success = PlannerAgendaItemService.delete_planner_item(test_db, 999, test_user.id)
+        success = PlannerAgendaItemService.delete_agenda_item(test_db, 999, test_user.id)
         assert success is False
         
         # Try to delete an item with a different user_id
-        success = PlannerAgendaItemService.delete_planner_item(test_db, item.id, 999)
+        success = PlannerAgendaItemService.delete_agenda_item(test_db, item.id, 999)
         assert success is False
 
-    def test_reorder_items(self, test_db: Session, test_user, test_agenda):
-        """Test that reorder_items reorders items correctly"""
+    def test_reorder_agenda_items(self, test_db: Session, test_user, test_agenda):
+        """Test that reorder_agenda_items reorders items correctly"""
         # Create some items
         item1 = PlannerAgendaItem(
             text="Item 1",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             agenda_id=test_agenda.id
         )
         item2 = PlannerAgendaItem(
             text="Item 2",
             index=1,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             agenda_id=test_agenda.id
         )
         item3 = PlannerAgendaItem(
             text="Item 3",
             index=2,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             agenda_id=test_agenda.id
         )
@@ -240,7 +240,7 @@ class TestPlannerAgendaItemService:
         test_db.refresh(item3)
         
         # Reorder the items (3, 1, 2)
-        success = PlannerAgendaItemService.reorder_items(test_db, [item3.id, item1.id, item2.id], test_user.id)
+        success = PlannerAgendaItemService.reorder_agenda_items(test_db, [item3.id, item1.id, item2.id], test_user.id)
         assert success is True
         
         # Check that the items were reordered correctly
@@ -251,68 +251,38 @@ class TestPlannerAgendaItemService:
         assert db_item1.index == 1
         assert db_item2.index == 2
 
-
-    def test_complete_all_items(self, test_db: Session, test_user, test_agenda):
-        """All non-deleted items should become COMPLETED; deleted items stay unchanged"""
-        # Prepare data: 4 items in various states + one already deleted
+    def test_delete_finished_agenda_items(self, test_db: Session, test_user, test_agenda):
         items = [
-            PlannerAgendaItem(text="t1", index=0, state=PlannerItemState.TODO.value, user_id=test_user.id, agenda_id=test_agenda.id),
-            PlannerAgendaItem(text="t2", index=1, state=PlannerItemState.SNOOZED.value, user_id=test_user.id, agenda_id=test_agenda.id),
-            PlannerAgendaItem(text="t3", index=2, state=PlannerItemState.DROPPED.value, user_id=test_user.id, agenda_id=test_agenda.id),
-            PlannerAgendaItem(text="t4", index=3, state=PlannerItemState.COMPLETED.value, user_id=test_user.id, agenda_id=test_agenda.id),
-            PlannerAgendaItem(text="t5", index=4, state=PlannerItemState.TODO.value, user_id=test_user.id, agenda_id=test_agenda.id),
-        ]
-        test_db.add_all(items)
-        test_db.commit()
-        # Soft delete the last one to ensure it isn't affected
-        items[-1].mark_as_deleted()
-        test_db.commit()
-
-        success = PlannerAgendaItemService.complete_all_agenda_items(test_db, test_agenda.id, test_user.id)
-        assert success is True
-
-        # Verify non-deleted items are completed
-        refreshed = test_db.query(PlannerAgendaItem).filter(PlannerAgendaItem.agenda_id == test_agenda.id).order_by(PlannerAgendaItem.index).all()
-        assert refreshed[0].state == PlannerItemState.COMPLETED.value
-        assert refreshed[1].state == PlannerItemState.COMPLETED.value
-        assert refreshed[2].state == PlannerItemState.COMPLETED.value
-        assert refreshed[3].state == PlannerItemState.COMPLETED.value
-        # The deleted one remains as-is (state may remain TODO but is_deleted is True)
-        assert refreshed[4].is_deleted is True
-
-    def test_delete_completed_items(self, test_db: Session, test_user, test_agenda):
-        """Only COMPLETED items should be soft-deleted"""
-        items = [
-            PlannerAgendaItem(text="t1", index=0, state=PlannerItemState.TODO.value, user_id=test_user.id, agenda_id=test_agenda.id),
-            PlannerAgendaItem(text="t2", index=1, state=PlannerItemState.COMPLETED.value, user_id=test_user.id, agenda_id=test_agenda.id),
-            PlannerAgendaItem(text="t3", index=2, state=PlannerItemState.SNOOZED.value, user_id=test_user.id, agenda_id=test_agenda.id),
-            PlannerAgendaItem(text="t4", index=3, state=PlannerItemState.COMPLETED.value, user_id=test_user.id, agenda_id=test_agenda.id),
+            PlannerAgendaItem(text="t1", index=0, state=PlannerItemState.TODO, user_id=test_user.id, agenda_id=test_agenda.id),
+            PlannerAgendaItem(text="t2", index=1, state=PlannerItemState.COMPLETED, user_id=test_user.id, agenda_id=test_agenda.id),
+            PlannerAgendaItem(text="t3", index=2, state=PlannerItemState.SNOOZED, user_id=test_user.id, agenda_id=test_agenda.id),
+            PlannerAgendaItem(text="t4", index=3, state=PlannerItemState.DROPPED, user_id=test_user.id, agenda_id=test_agenda.id),
         ]
         test_db.add_all(items)
         test_db.commit()
 
-        success = PlannerAgendaItemService.delete_completed_agenda_items(test_db, test_agenda.id, test_user.id)
+        success = PlannerAgendaItemService.delete_finished_agenda_items(test_db, test_agenda.id, test_user.id)
         assert success is True
 
         refreshed = test_db.query(PlannerAgendaItem).filter(PlannerAgendaItem.agenda_id == test_agenda.id).order_by(PlannerAgendaItem.index).all()
         assert refreshed[0].is_deleted is False
         assert refreshed[1].is_deleted is True and refreshed[1].deleted_dt is not None
-        assert refreshed[2].is_deleted is False
+        assert refreshed[2].is_deleted is True and refreshed[2].deleted_dt is not None
         assert refreshed[3].is_deleted is True and refreshed[3].deleted_dt is not None
 
-    def test_sort_items_by_completion(self, test_db: Session, test_user, test_agenda):
+    def test_sort_agenda_items_by_state(self, test_db: Session, test_user, test_agenda):
         """Completed, snoozed, dropped, todo order; stable within groups"""
         # Original order by index: A(todo), B(completed), C(todo), D(snoozed), E(completed), F(dropped)
-        a = PlannerAgendaItem(text="A", index=0, state=PlannerItemState.TODO.value, user_id=test_user.id, agenda_id=test_agenda.id)
-        b = PlannerAgendaItem(text="B", index=1, state=PlannerItemState.COMPLETED.value, user_id=test_user.id, agenda_id=test_agenda.id)
-        c = PlannerAgendaItem(text="C", index=2, state=PlannerItemState.TODO.value, user_id=test_user.id, agenda_id=test_agenda.id)
-        d = PlannerAgendaItem(text="D", index=3, state=PlannerItemState.SNOOZED.value, user_id=test_user.id, agenda_id=test_agenda.id)
-        e = PlannerAgendaItem(text="E", index=4, state=PlannerItemState.COMPLETED.value, user_id=test_user.id, agenda_id=test_agenda.id)
-        f = PlannerAgendaItem(text="F", index=5, state=PlannerItemState.DROPPED.value, user_id=test_user.id, agenda_id=test_agenda.id)
+        a = PlannerAgendaItem(text="A", index=0, state=PlannerItemState.TODO, user_id=test_user.id, agenda_id=test_agenda.id)
+        b = PlannerAgendaItem(text="B", index=1, state=PlannerItemState.COMPLETED, user_id=test_user.id, agenda_id=test_agenda.id)
+        c = PlannerAgendaItem(text="C", index=2, state=PlannerItemState.TODO, user_id=test_user.id, agenda_id=test_agenda.id)
+        d = PlannerAgendaItem(text="D", index=3, state=PlannerItemState.SNOOZED, user_id=test_user.id, agenda_id=test_agenda.id)
+        e = PlannerAgendaItem(text="E", index=4, state=PlannerItemState.COMPLETED, user_id=test_user.id, agenda_id=test_agenda.id)
+        f = PlannerAgendaItem(text="F", index=5, state=PlannerItemState.DROPPED, user_id=test_user.id, agenda_id=test_agenda.id)
         test_db.add_all([a, b, c, d, e, f])
         test_db.commit()
 
-        success = PlannerAgendaItemService.sort_agenda_items_by_completion(test_db, test_agenda.id, test_user.id)
+        success = PlannerAgendaItemService.sort_agenda_items_by_state(test_db, test_agenda.id, test_user.id)
         assert success is True
 
         # Fetch by new index order
