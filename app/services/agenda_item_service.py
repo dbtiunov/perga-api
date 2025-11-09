@@ -122,18 +122,22 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
         if not db_item:
             return None
 
-        db_item.mark_as_deleted()
+        try:
+            with atomic_transaction(db):
+                db_item.mark_as_deleted()
 
-        new_index = cls.get_new_item_index(db, agenda_id, user_id)
-        new_db_item = PlannerAgendaItem(
-            user_id=user_id,
-            agenda_id=agenda_id,
-            text=db_item.text,
-            state=db_item.state,
-            index=new_index,
-        )
-        db.add(new_db_item)
-        db.commit()
+                new_index = cls.get_new_item_index(db, agenda_id, user_id)
+                new_db_item = PlannerAgendaItem(
+                    user_id=user_id,
+                    agenda_id=agenda_id,
+                    text=db_item.text,
+                    state=db_item.state,
+                    index=new_index,
+                )
+                db.add(new_db_item)
+        except TransactionRollback as e:
+            logger.warning(f'move_agenda_item: {str(e)}')
+            return None
 
         db.refresh(new_db_item)
         return new_db_item

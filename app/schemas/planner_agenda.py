@@ -1,6 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel
 
+from enum import Enum
 from app.models.choices import PlannerItemState, PlannerAgendaType
 from app.schemas.planner_day import BasePlannerItemBase
 
@@ -78,3 +79,14 @@ class CopyAgendaItemRequest(BaseModel):
 
 class MoveAgendaItemRequest(BaseModel):
     agenda_id: int
+
+
+# Unified agenda-level action request
+class AgendaAction(str, Enum):
+    ACTION_MARK_ALL_ITEMS_AS_COMPLETED = "mark_all_items_as_completed"
+    ACTION_DELETE_COMPLETED_ITEMS = "delete_completed_items"
+    ACTION_SORT_ITEMS_BY_COMPLETION = "sort_items_by_completion"
+
+
+class PlannerAgendaActionRequest(BaseModel):
+    action: AgendaAction

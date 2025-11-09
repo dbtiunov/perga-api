@@ -10,6 +10,7 @@ from app.schemas.planner_agenda import (
     PlannerAgendaItem, PlannerAgendaItemCreate, PlannerAgendaItemUpdate,
     ReorderAgendaItemsRequest, ReorderAgendasRequest,
     CopyAgendaItemRequest, MoveAgendaItemRequest,
+    PlannerAgendaActionRequest, AgendaAction,
 )
 from app.services.agenda_service import PlannerAgendaService
 from app.services.agenda_item_service import PlannerAgendaItemService
@@ -249,3 +250,38 @@ def move_planner_agenda_item(
     if not new_db_item:
         raise HTTPException(status_code=400, detail="Failed to snooze planner agenda item")
     return new_db_item
+
+
+
+@router.post("/{agenda_id}/action/", response_model=dict)
+def planner_agenda_action(
+    agenda_id: int,
+    request: PlannerAgendaActionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(AuthService.get_current_user)
+):
+    """
+    Unified agenda-level action endpoint.
+
+    Supported actions:
+    - ACTION_MARK_AS_COMPLETED: mark all items as completed
+    - ACTION_DELETED_COMPLETED: delete all completed items (soft delete)
+    - ACTION_SORT_BY_COMPLETION: reorder items with completed first
+    """
+    # Verify agenda belongs to current user
+    db_agenda = PlannerAgendaService.get_planner_agenda(db, agenda_id=agenda_id, user_id=current_user.id)
+    if not db_agenda:
+        raise HTTPException(status_code=404, detail="Planner agenda not found")
+
+    if request.action == AgendaAction.ACTION_MARK_ALL_ITEMS_AS_COMPLETED:
+        PlannerAgendaService.complete_all_items(db, agenda_id=agenda_id, user_id=current_user.id)
+    elif request.action == AgendaAction.ACTION_DELETE_COMPLETED_ITEMS:
+        PlannerAgendaService.delete_completed_items(db, agenda_id=agenda_id, user_id=current_user.id)
+    elif request.action == AgendaAction.ACTION_SORT_ITEMS_BY_COMPLETION:
+        success = PlannerAgendaService.sort_items_by_completion(db, agenda_id=agenda_id, user_id=current_user.id)
+        if not success:
+            raise HTTPException(status_code=400, detail="Failed to sort items")
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported action")
+
+    return {"detail": "Action is applied successfully"}
