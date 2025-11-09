@@ -53,7 +53,9 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
             result_agendas.append(selected_month_agenda)
 
         if PlannerAgendaType.CUSTOM in agenda_types:
-            custom_agendas = base_query.filter(PlannerAgenda.agenda_type == PlannerAgendaType.CUSTOM.value).all()
+            custom_agendas = base_query.filter(
+                PlannerAgenda.agenda_type == PlannerAgendaType.CUSTOM.value
+            ).order_by(PlannerAgenda.index).all()
             result_agendas.extend(custom_agendas)
 
         if PlannerAgendaType.ARCHIVED in agenda_types:
