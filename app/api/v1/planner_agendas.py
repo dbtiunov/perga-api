@@ -31,12 +31,12 @@ def get_agendas(
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
 ):
-    agendas = PlannerAgendaService.get_planner_agendas(db, current_user.id, agenda_types, selected_day, with_counts)
+    agendas = PlannerAgendaService.get_agendas(db, current_user.id, agenda_types, selected_day, with_counts)
     return agendas
 
 
 @router.post("/", response_model=PlannerAgenda)
-def create_planner_agenda(
+def create_agenda(
     agenda_item: PlannerAgendaCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
@@ -46,7 +46,7 @@ def create_planner_agenda(
 
 
 @router.put("/{agenda_id}/", response_model=PlannerAgenda)
-def update_planner_agenda(
+def update_agenda(
     agenda_id: int,
     agenda_item: PlannerAgendaUpdate,
     db: Session = Depends(get_db),
@@ -71,7 +71,7 @@ def update_planner_agenda(
 
 
 @router.delete("/{agenda_id}/", response_model=dict)
-def delete_planner_agenda(
+def delete_agenda(
     agenda_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
@@ -109,7 +109,7 @@ def reorder_agendas(
 
 # Item routes
 @router.post("/items/", response_model=PlannerAgendaItem)
-def create_planner_agenda_item(
+def create_agenda_item(
     item: PlannerAgendaItemCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
@@ -123,7 +123,7 @@ def create_planner_agenda_item(
 
 
 @router.put("/items/{item_id}/", response_model=PlannerAgendaItem)
-def update_planner_agenda_item(
+def update_agenda_item(
     item_id: int,
     item: PlannerAgendaItemUpdate,
     db: Session = Depends(get_db),
@@ -146,7 +146,7 @@ def update_planner_agenda_item(
 
 
 @router.delete("/items/{item_id}/", response_model=dict)
-def delete_planner_agenda_item(
+def delete_agenda_item(
     item_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
@@ -183,7 +183,7 @@ def reorder_agenda_items(
 
 
 @router.get("/items/", response_model=dict[int, list[PlannerAgendaItem]])
-def get_planner_items_by_agendas(
+def get_items_by_agendas(
     agenda_ids: list[int] = Query(..., description="List of agenda IDs"),
     db: Session = Depends(get_db),
     current_user: User = Depends(AuthService.get_current_user)
@@ -203,7 +203,7 @@ def get_planner_items_by_agendas(
 
 
 @router.post("/items/{item_id}/copy/", response_model=PlannerAgendaItem)
-def copy_planner_agenda_item(
+def copy_agenda_item(
     request: CopyAgendaItemRequest,
     item_id: int,
     db: Session = Depends(get_db),
@@ -228,7 +228,7 @@ def copy_planner_agenda_item(
 
 
 @router.post("/items/{item_id}/move/", response_model=PlannerAgendaItem)
-def move_planner_agenda_item(
+def move_agenda_item(
     request: MoveAgendaItemRequest,
     item_id: int,
     db: Session = Depends(get_db),
@@ -252,9 +252,8 @@ def move_planner_agenda_item(
     return new_db_item
 
 
-
 @router.post("/{agenda_id}/action/", response_model=dict)
-def planner_agenda_action(
+def agenda_action(
     agenda_id: int,
     request: PlannerAgendaActionRequest,
     db: Session = Depends(get_db),
