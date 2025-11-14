@@ -253,10 +253,18 @@ class TestPlannerAgendaItemService:
 
     def test_delete_finished_agenda_items(self, test_db: Session, test_user, test_agenda):
         items = [
-            PlannerAgendaItem(text="t1", index=0, state=PlannerItemState.TODO, user_id=test_user.id, agenda_id=test_agenda.id),
-            PlannerAgendaItem(text="t2", index=1, state=PlannerItemState.COMPLETED, user_id=test_user.id, agenda_id=test_agenda.id),
-            PlannerAgendaItem(text="t3", index=2, state=PlannerItemState.SNOOZED, user_id=test_user.id, agenda_id=test_agenda.id),
-            PlannerAgendaItem(text="t4", index=3, state=PlannerItemState.DROPPED, user_id=test_user.id, agenda_id=test_agenda.id),
+            PlannerAgendaItem(
+                text="t1", index=0, state=PlannerItemState.TODO, user_id=test_user.id, agenda_id=test_agenda.id
+            ),
+            PlannerAgendaItem(
+                text="t2", index=1, state=PlannerItemState.COMPLETED, user_id=test_user.id, agenda_id=test_agenda.id
+            ),
+            PlannerAgendaItem(
+                text="t3", index=2, state=PlannerItemState.SNOOZED, user_id=test_user.id, agenda_id=test_agenda.id
+            ),
+            PlannerAgendaItem(
+                text="t4", index=3, state=PlannerItemState.DROPPED, user_id=test_user.id, agenda_id=test_agenda.id
+            ),
         ]
         test_db.add_all(items)
         test_db.commit()
@@ -264,7 +272,9 @@ class TestPlannerAgendaItemService:
         success = PlannerAgendaItemService.delete_finished_agenda_items(test_db, test_agenda.id, test_user.id)
         assert success is True
 
-        refreshed = test_db.query(PlannerAgendaItem).filter(PlannerAgendaItem.agenda_id == test_agenda.id).order_by(PlannerAgendaItem.index).all()
+        refreshed = test_db.query(PlannerAgendaItem).filter(
+            PlannerAgendaItem.agenda_id == test_agenda.id
+        ).order_by(PlannerAgendaItem.index).all()
         assert refreshed[0].is_deleted is False
         assert refreshed[1].is_deleted is True and refreshed[1].deleted_dt is not None
         assert refreshed[2].is_deleted is True and refreshed[2].deleted_dt is not None
@@ -273,12 +283,24 @@ class TestPlannerAgendaItemService:
     def test_sort_agenda_items_by_state(self, test_db: Session, test_user, test_agenda):
         """Completed, snoozed, dropped, todo order; stable within groups"""
         # Original order by index: A(todo), B(completed), C(todo), D(snoozed), E(completed), F(dropped)
-        a = PlannerAgendaItem(text="A", index=0, state=PlannerItemState.TODO, user_id=test_user.id, agenda_id=test_agenda.id)
-        b = PlannerAgendaItem(text="B", index=1, state=PlannerItemState.COMPLETED, user_id=test_user.id, agenda_id=test_agenda.id)
-        c = PlannerAgendaItem(text="C", index=2, state=PlannerItemState.TODO, user_id=test_user.id, agenda_id=test_agenda.id)
-        d = PlannerAgendaItem(text="D", index=3, state=PlannerItemState.SNOOZED, user_id=test_user.id, agenda_id=test_agenda.id)
-        e = PlannerAgendaItem(text="E", index=4, state=PlannerItemState.COMPLETED, user_id=test_user.id, agenda_id=test_agenda.id)
-        f = PlannerAgendaItem(text="F", index=5, state=PlannerItemState.DROPPED, user_id=test_user.id, agenda_id=test_agenda.id)
+        a = PlannerAgendaItem(
+            text="A", index=0, state=PlannerItemState.TODO, user_id=test_user.id, agenda_id=test_agenda.id
+        )
+        b = PlannerAgendaItem(
+            text="B", index=1, state=PlannerItemState.COMPLETED, user_id=test_user.id, agenda_id=test_agenda.id
+        )
+        c = PlannerAgendaItem(
+            text="C", index=2, state=PlannerItemState.TODO, user_id=test_user.id, agenda_id=test_agenda.id
+        )
+        d = PlannerAgendaItem(
+            text="D", index=3, state=PlannerItemState.SNOOZED, user_id=test_user.id, agenda_id=test_agenda.id
+        )
+        e = PlannerAgendaItem(
+            text="E", index=4, state=PlannerItemState.COMPLETED, user_id=test_user.id, agenda_id=test_agenda.id
+        )
+        f = PlannerAgendaItem(
+            text="F", index=5, state=PlannerItemState.DROPPED, user_id=test_user.id, agenda_id=test_agenda.id
+        )
         test_db.add_all([a, b, c, d, e, f])
         test_db.commit()
 
@@ -286,7 +308,9 @@ class TestPlannerAgendaItemService:
         assert success is True
 
         # Fetch by new index order
-        ordered = test_db.query(PlannerAgendaItem).filter(PlannerAgendaItem.agenda_id == test_agenda.id).order_by(PlannerAgendaItem.index).all()
+        ordered = test_db.query(PlannerAgendaItem).filter(
+            PlannerAgendaItem.agenda_id == test_agenda.id
+        ).order_by(PlannerAgendaItem.index).all()
         # Expect completed first (B, E), then snoozed (D), then dropped (F), then todo (A, C)
         texts_by_index = [it.text for it in ordered]
         assert texts_by_index == ["B", "E", "D", "F", "A", "C"]
