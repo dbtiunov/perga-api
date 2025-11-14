@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app import const
-from app.models.choices import PlannerAgendaType
+from app.const import PlannerAgendaType, PLANNER_CUSTOM_AGENDA_INDEX_MIN
 from app.models.planner import PlannerAgenda
 from app.schemas.planner_agenda import PlannerAgendaCreate, PlannerAgendaUpdate
 from app.services.agenda_service import PlannerAgendaService
@@ -15,8 +14,8 @@ class TestPlannerAgendaService:
         # Create a CUSTOM agenda
         agenda = PlannerAgenda(
             name="To Archive",
-            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
-            agenda_type=PlannerAgendaType.CUSTOM.value,
+            index=PLANNER_CUSTOM_AGENDA_INDEX_MIN,
+            agenda_type=PlannerAgendaType.CUSTOM,
             user_id=test_user.id
         )
         test_db.add(agenda)
@@ -27,31 +26,31 @@ class TestPlannerAgendaService:
         update = PlannerAgendaUpdate(agenda_type=PlannerAgendaType.ARCHIVED)
         archived = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, update, test_user.id)
         assert archived is not None
-        assert archived.agenda_type == PlannerAgendaType.ARCHIVED.value
+        assert archived.agenda_type == PlannerAgendaType.ARCHIVED
         # Unchanged fields
         assert archived.name == "To Archive"
-        assert archived.index == const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
+        assert archived.index == PLANNER_CUSTOM_AGENDA_INDEX_MIN
 
         # Unarchive it back (ARCHIVED -> CUSTOM)
         update_back = PlannerAgendaUpdate(agenda_type=PlannerAgendaType.CUSTOM)
         unarchived = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, update_back, test_user.id)
         assert unarchived is not None
-        assert unarchived.agenda_type == PlannerAgendaType.CUSTOM.value
+        assert unarchived.agenda_type == PlannerAgendaType.CUSTOM
         # Unchanged fields
         assert unarchived.name == "To Archive"
-        assert unarchived.index == const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
+        assert unarchived.index == PLANNER_CUSTOM_AGENDA_INDEX_MIN
 
     def test_get_new_agenda_index(self, test_db: Session, test_user):
         """Test that get_new_agenda_index returns the correct index"""
         # When there are no agendas, index should be 1
         index = PlannerAgendaService.get_new_agenda_index(test_db, test_user.id)
-        assert index == const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
+        assert index == PLANNER_CUSTOM_AGENDA_INDEX_MIN
 
         # Create an agenda with index 1
         agenda = PlannerAgenda(
             name="Test Agenda",
             index=index,
-            agenda_type=PlannerAgendaType.CUSTOM.value,
+            agenda_type=PlannerAgendaType.CUSTOM,
             user_id=test_user.id
         )
         test_db.add(agenda)
@@ -66,8 +65,8 @@ class TestPlannerAgendaService:
         # Create an agenda
         agenda = PlannerAgenda(
             name="Test Agenda",
-            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
-            agenda_type=PlannerAgendaType.CUSTOM.value,
+            index=PLANNER_CUSTOM_AGENDA_INDEX_MIN,
+            agenda_type=PlannerAgendaType.CUSTOM,
             user_id=test_user.id
         )
         test_db.add(agenda)
@@ -79,7 +78,7 @@ class TestPlannerAgendaService:
         assert db_agenda is not None
         assert db_agenda.id == agenda.id
         assert db_agenda.name == "Test Agenda"
-        assert db_agenda.agenda_type == PlannerAgendaType.CUSTOM.value
+        assert db_agenda.agenda_type == PlannerAgendaType.CUSTOM
 
         # Try to get a non-existent agenda
         db_agenda = PlannerAgendaService.get_planner_agenda(test_db, 999, test_user.id)
@@ -102,8 +101,8 @@ class TestPlannerAgendaService:
         # Check that the agenda was created correctly
         assert db_agenda.id is not None
         assert db_agenda.name == "Test Agenda"
-        assert db_agenda.agenda_type == PlannerAgendaType.CUSTOM.value
-        assert db_agenda.index == const.PLANNER_CUSTOM_AGENDA_INDEX_MIN
+        assert db_agenda.agenda_type == PlannerAgendaType.CUSTOM
+        assert db_agenda.index == PLANNER_CUSTOM_AGENDA_INDEX_MIN
         assert db_agenda.user_id == test_user.id
 
     def test_update_planner_agenda(self, test_db: Session, test_user):
@@ -111,8 +110,8 @@ class TestPlannerAgendaService:
         # Create an agenda
         agenda = PlannerAgenda(
             name="Test Agenda",
-            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
-            agenda_type=PlannerAgendaType.CUSTOM.value,
+            index=PLANNER_CUSTOM_AGENDA_INDEX_MIN,
+            agenda_type=PlannerAgendaType.CUSTOM,
             user_id=test_user.id
         )
         test_db.add(agenda)
@@ -128,7 +127,7 @@ class TestPlannerAgendaService:
         # Check that the agenda was updated correctly
         assert db_agenda.id == agenda.id
         assert db_agenda.name == "Updated Agenda"
-        assert db_agenda.agenda_type == PlannerAgendaType.CUSTOM.value  # Unchanged
+        assert db_agenda.agenda_type == PlannerAgendaType.CUSTOM  # Unchanged
         
         # Try to update a non-existent agenda
         db_agenda = PlannerAgendaService.update_planner_agenda(test_db, 999, agenda_update, test_user.id)
@@ -143,8 +142,8 @@ class TestPlannerAgendaService:
         # Create an agenda
         agenda = PlannerAgenda(
             name="Test Agenda",
-            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
-            agenda_type=PlannerAgendaType.CUSTOM.value,
+            index=PLANNER_CUSTOM_AGENDA_INDEX_MIN,
+            agenda_type=PlannerAgendaType.CUSTOM,
             user_id=test_user.id
         )
         test_db.add(agenda)
@@ -173,20 +172,20 @@ class TestPlannerAgendaService:
         # Create some agendas
         agenda1 = PlannerAgenda(
             name="Agenda 1",
-            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN,
-            agenda_type=PlannerAgendaType.CUSTOM.value,
+            index=PLANNER_CUSTOM_AGENDA_INDEX_MIN,
+            agenda_type=PlannerAgendaType.CUSTOM,
             user_id=test_user.id
         )
         agenda2 = PlannerAgenda(
             name="Agenda 2",
-            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN + 1,
-            agenda_type=PlannerAgendaType.CUSTOM.value,
+            index=PLANNER_CUSTOM_AGENDA_INDEX_MIN + 1,
+            agenda_type=PlannerAgendaType.CUSTOM,
             user_id=test_user.id
         )
         agenda3 = PlannerAgenda(
             name="Agenda 3",
-            index=const.PLANNER_CUSTOM_AGENDA_INDEX_MIN + 2,
-            agenda_type=PlannerAgendaType.CUSTOM.value,
+            index=PLANNER_CUSTOM_AGENDA_INDEX_MIN + 2,
+            agenda_type=PlannerAgendaType.CUSTOM,
             user_id=test_user.id
         )
         test_db.add_all([agenda1, agenda2, agenda3])

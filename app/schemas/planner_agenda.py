@@ -1,7 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel
 
-from app.models.choices import PlannerItemState, PlannerAgendaType
+from app.const import PlannerAgendaType, PlannerItemState, PlannerAgendaAction
 from app.schemas.planner_day import BasePlannerItemBase
 
 
@@ -10,17 +10,11 @@ class PlannerAgendaCreate(BaseModel):
     name: str
     index: int | None = None
 
-    class Config:
-        use_enum_values = True
-
 
 class PlannerAgendaUpdate(BaseModel):
     name: str | None = None
     index: int | None = None
     agenda_type: PlannerAgendaType | None = None
-
-    class Config:
-        use_enum_values = True
 
 
 class PlannerAgenda(BaseModel):
@@ -78,3 +72,7 @@ class CopyAgendaItemRequest(BaseModel):
 
 class MoveAgendaItemRequest(BaseModel):
     agenda_id: int
+
+
+class PlannerAgendaActionRequest(BaseModel):
+    action: PlannerAgendaAction

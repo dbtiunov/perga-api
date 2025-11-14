@@ -3,7 +3,7 @@ from datetime import date, timedelta
 
 from sqlalchemy.orm import Session
 
-from app.models.choices import PlannerItemState
+from app.const import PlannerItemState
 from app.models.planner import PlannerDayItem
 from app.schemas.planner_day import PlannerDayItemCreate, PlannerDayItemUpdate
 from app.services.planner_day_service import PlannerDayItemService
@@ -27,7 +27,7 @@ class TestPlannerDayItemService:
         item = PlannerDayItem(
             text="Test Item",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             day=test_day
         )
@@ -44,7 +44,7 @@ class TestPlannerDayItemService:
         item = PlannerDayItem(
             text="Test Item",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             day=test_day
         )
@@ -57,7 +57,7 @@ class TestPlannerDayItemService:
         assert db_item is not None
         assert db_item.id == item.id
         assert db_item.text == "Test Item"
-        assert db_item.state == PlannerItemState.TODO.value
+        assert db_item.state == PlannerItemState.TODO
         assert db_item.day == test_day
 
         # Try to get a non-existent item
@@ -74,14 +74,14 @@ class TestPlannerDayItemService:
         item1 = PlannerDayItem(
             text="Item 1",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             day=test_day
         )
         item2 = PlannerDayItem(
             text="Item 2",
             index=1,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             day=test_day
         )
@@ -93,7 +93,7 @@ class TestPlannerDayItemService:
         item3 = PlannerDayItem(
             text="Item 3",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             day=tomorrow
         )
@@ -116,7 +116,6 @@ class TestPlannerDayItemService:
         # Create an item
         item_create = PlannerDayItemCreate(
             text="Test Item",
-            state=PlannerItemState.TODO.value,
             day=test_day
         )
         db_item = PlannerDayItemService.create_day_item(test_db, item_create, test_user.id)
@@ -124,7 +123,7 @@ class TestPlannerDayItemService:
         # Check that the item was created correctly
         assert db_item.id is not None
         assert db_item.text == "Test Item"
-        assert db_item.state == PlannerItemState.TODO.value
+        assert db_item.state == PlannerItemState.TODO
         assert db_item.day == test_day
         assert db_item.index == 0  # Should be the first item
         assert db_item.user_id == test_user.id
@@ -135,7 +134,7 @@ class TestPlannerDayItemService:
         item = PlannerDayItem(
             text="Test Item",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             day=test_day
         )
@@ -147,7 +146,7 @@ class TestPlannerDayItemService:
         tomorrow = test_day + timedelta(days=1)
         item_update = PlannerDayItemUpdate(
             text="Updated Item",
-            state=PlannerItemState.COMPLETED.value,
+            state=PlannerItemState.COMPLETED,
             day=tomorrow
         )
         db_item = PlannerDayItemService.update_day_item(test_db, item.id, item_update, test_user.id)
@@ -155,7 +154,7 @@ class TestPlannerDayItemService:
         # Check that the item was updated correctly
         assert db_item.id == item.id
         assert db_item.text == "Updated Item"
-        assert db_item.state == PlannerItemState.COMPLETED.value
+        assert db_item.state == PlannerItemState.COMPLETED
         assert db_item.day == tomorrow
         assert db_item.index == 0  # Unchanged
         
@@ -173,7 +172,7 @@ class TestPlannerDayItemService:
         item = PlannerDayItem(
             text="Test Item",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             day=test_day
         )
@@ -204,21 +203,21 @@ class TestPlannerDayItemService:
         item1 = PlannerDayItem(
             text="Item 1",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             day=test_day
         )
         item2 = PlannerDayItem(
             text="Item 2",
             index=1,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             day=test_day
         )
         item3 = PlannerDayItem(
             text="Item 3",
             index=2,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             day=test_day
         )
@@ -246,7 +245,7 @@ class TestPlannerDayItemService:
         item = PlannerDayItem(
             text="Test Item",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             day=test_day
         )
@@ -267,7 +266,7 @@ class TestPlannerDayItemService:
         
         # Check that the original item is unchanged
         db_item = test_db.query(PlannerDayItem).filter(PlannerDayItem.id == item.id).first()
-        assert db_item.state == PlannerItemState.TODO.value
+        assert db_item.state == PlannerItemState.TODO
         assert db_item.day == test_day
         
         # Try to copy a non-existent item
@@ -284,7 +283,7 @@ class TestPlannerDayItemService:
         item = PlannerDayItem(
             text="Test Item",
             index=0,
-            state=PlannerItemState.TODO.value,
+            state=PlannerItemState.TODO,
             user_id=test_user.id,
             day=test_day
         )
@@ -305,7 +304,7 @@ class TestPlannerDayItemService:
         
         # Check that the original item is marked as snoozed
         db_item = test_db.query(PlannerDayItem).filter(PlannerDayItem.id == item.id).first()
-        assert db_item.state == PlannerItemState.SNOOZED.value
+        assert db_item.state == PlannerItemState.SNOOZED
         assert db_item.day == test_day
         
         # Try to snooze a non-existent item

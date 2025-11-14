@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from app.models.choices import WeekStartDay
+from app.const import WeekStartDay
 
 
 class User(BaseModel):
