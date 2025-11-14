@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer, Date, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 
-from app import const
+from app.const import PlannerAgendaType, PlannerItemState
 from app.models.base import BaseModel
 
 
@@ -21,7 +21,7 @@ class PlannerAgenda(BaseModel):
 
     name = Column(String(length=64), nullable=False)
     index = Column(Integer, default=0)
-    agenda_type = Column(String(length=32), nullable=False, default=const.PlannerAgendaType.CUSTOM)
+    agenda_type = Column(String(length=32), nullable=False, default=PlannerAgendaType.CUSTOM)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     # Relationships
@@ -37,7 +37,7 @@ class BasePlannerItem(BaseModel):
 
     text = Column(String(length=64))
     index = Column(Integer, default=0)
-    state = Column(String(length=32), nullable=False, default=const.PlannerItemState.TODO)
+    state = Column(String(length=32), nullable=False, default=PlannerItemState.TODO)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
 
