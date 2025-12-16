@@ -20,7 +20,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/access_token/")
 class AuthService:
     @classmethod
     def authenticate_user(cls, db: Session, username: str, password: str) -> User | None:
-        user = UserService.get_user_by_username(db, username)
+        # Allow signing in using either username or email in the `username` field
+        user = (
+            UserService.get_user_by_username(db, username)
+            or UserService.get_user_by_email(db, username)
+        )
         if not user or not verify_password(password, user.hashed_password):
             return None
         return user
