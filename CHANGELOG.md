@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.2] - 2026-01-11
+
+### Fixed
+- Restored accidentaly removed initial migration
+
 ## [1.0.1] - 2025-12-16
 
 ### Fixed
