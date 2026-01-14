@@ -23,6 +23,8 @@ class User(BaseModel):
     planner_agendas = relationship("PlannerAgenda", back_populates="user")
     planner_day_items = relationship("PlannerDayItem", back_populates="user")
     planner_agenda_items = relationship("PlannerAgendaItem", back_populates="user")
+    notes = relationship("Note", back_populates="user")
+    notes_folders = relationship("NotesFolder", back_populates="user")
 
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, email={self.email}, is_active={self.is_active})>"
