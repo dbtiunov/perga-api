@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.models.note import Note, NotesFolder
 from app.services.base_service import BaseService
-from app.schemas.note import NoteCreate, NoteUpdate, NotesFolderCreate, NotesFolderUpdate
+from app.schemas.note import NoteCreateSchema, NoteUpdateSchema, NotesFolderCreateSchema, NotesFolderUpdateSchema
 
 
 class NoteService(BaseService[Note]):
@@ -20,7 +20,7 @@ class NoteService(BaseService[Note]):
         return cls.get_base_query(db).filter(Note.user_id == user_id, Note.id == note_id).first()
 
     @classmethod
-    def create_note(cls, db: Session, user_id: int, note_in: NoteCreate) -> Note:
+    def create_note(cls, db: Session, user_id: int, note_in: NoteCreateSchema) -> Note:
         db_note = Note(user_id=user_id, **note_in.model_dump())
         db.add(db_note)
         db.commit()
@@ -28,7 +28,7 @@ class NoteService(BaseService[Note]):
         return db_note
 
     @classmethod
-    def update_note(cls, db: Session, note_id: int, user_id: int, note_in: NoteUpdate) -> Note | None:
+    def update_note(cls, db: Session, note_id: int, user_id: int, note_in: NoteUpdateSchema) -> Note | None:
         db_note = cls.get_note(db, note_id, user_id)
         if not db_note:
             return None
@@ -67,7 +67,7 @@ class NotesFolderService(BaseService[NotesFolder]):
         return (max_folder.index + 1) if max_folder else 0
 
     @classmethod
-    def create_folder(cls, db: Session, user_id: int, folder_in: NotesFolderCreate) -> NotesFolder:
+    def create_folder(cls, db: Session, user_id: int, folder_in: NotesFolderCreateSchema) -> NotesFolder:
         data = folder_in.model_dump()
         if data.get('index') is None:
             data['index'] = cls.get_new_folder_index(db, user_id)
@@ -78,7 +78,7 @@ class NotesFolderService(BaseService[NotesFolder]):
         return db_folder
 
     @classmethod
-    def update_folder(cls, db: Session, folder_id: int, user_id: int, folder_in: NotesFolderUpdate) -> NotesFolder | None:
+    def update_folder(cls, db: Session, folder_id: int, user_id: int, folder_in: NotesFolderUpdateSchema) -> NotesFolder | None:
         db_folder = cls.get_folder(db, folder_id, user_id)
         if not db_folder:
             return None

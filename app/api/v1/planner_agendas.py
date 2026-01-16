@@ -6,20 +6,20 @@ from app.const import PlannerAgendaType, PlannerAgendaAction
 from app.services.auth_service import AuthService
 from app.core.database import get_db
 from app.schemas.planner_agenda import (
-    PlannerAgenda, PlannerAgendaCreate, PlannerAgendaUpdate,
-    PlannerAgendaItem, PlannerAgendaItemCreate, PlannerAgendaItemUpdate,
-    ReorderAgendaItemsRequest, ReorderAgendasRequest,
-    CopyAgendaItemRequest, MoveAgendaItemRequest,
-    PlannerAgendaActionRequest,
+    PlannerAgendaSchema, PlannerAgendaCreateSchema, PlannerAgendaUpdateSchema,
+    PlannerAgendaItemSchema, PlannerAgendaItemCreateSchema, PlannerAgendaItemUpdateSchema,
+    ReorderAgendaItemsSchema, ReorderAgendasSchema,
+    CopyAgendaItemSchema, MoveAgendaItemSchema,
+    PlannerAgendaActionSchema,
 )
 from app.services.agenda_service import PlannerAgendaService
 from app.services.agenda_item_service import PlannerAgendaItemService
-from app.schemas.user import User
+from app.schemas.user import UserSchema
 
 router = APIRouter()
 
 
-@router.get("/", response_model=list[PlannerAgenda])
+@router.get("/", response_model=list[PlannerAgendaSchema])
 def get_agendas(
     agenda_types: list[PlannerAgendaType] | None = Query(
         None, description="Agenda types to include: monthly, custom, archived"
@@ -29,28 +29,28 @@ def get_agendas(
     ),
     with_counts: bool | None = Query(False, description="Include agenda items counts"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     agendas = PlannerAgendaService.get_agendas(db, current_user.id, agenda_types, selected_day, with_counts)
     return agendas
 
 
-@router.post("/", response_model=PlannerAgenda)
+@router.post("/", response_model=PlannerAgendaSchema)
 def create_agenda(
-    agenda_item: PlannerAgendaCreate,
+    agenda_item: PlannerAgendaCreateSchema,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     db_agenda = PlannerAgendaService.create_planner_agenda(db=db, agenda_item=agenda_item, user_id=current_user.id)
     return db_agenda
 
 
-@router.put("/{agenda_id}/", response_model=PlannerAgenda)
+@router.put("/{agenda_id}/", response_model=PlannerAgendaSchema)
 def update_agenda(
     agenda_id: int,
-    agenda_item: PlannerAgendaUpdate,
+    agenda_item: PlannerAgendaUpdateSchema,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     # validate agenda_type for archive/unarchive actions
     if agenda_item.agenda_type and agenda_item.agenda_type not in [
@@ -74,7 +74,7 @@ def update_agenda(
 def delete_agenda(
     agenda_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     # First check if the agenda belongs to the current user
     db_agenda = PlannerAgendaService.get_planner_agenda(db, agenda_id=agenda_id, user_id=current_user.id)
@@ -90,9 +90,9 @@ def delete_agenda(
 
 @router.post("/reorder/", response_model=dict)
 def reorder_agendas(
-    request: ReorderAgendasRequest,
+    request: ReorderAgendasSchema,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     # First verify all agendas belong to the current user
     for agenda_id in request.ordered_agenda_ids:
@@ -108,11 +108,11 @@ def reorder_agendas(
 
 
 # Item routes
-@router.post("/items/", response_model=PlannerAgendaItem)
+@router.post("/items/", response_model=PlannerAgendaItemSchema)
 def create_agenda_item(
-    item: PlannerAgendaItemCreate,
+    item: PlannerAgendaItemCreateSchema,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     # Check if agenda exists and belongs to the current user
     db_agenda = PlannerAgendaService.get_planner_agenda(db, item.agenda_id, user_id=current_user.id)
@@ -122,12 +122,12 @@ def create_agenda_item(
     return PlannerAgendaItemService.create_agenda_item(db=db, item=item, user_id=current_user.id)
 
 
-@router.put("/items/{item_id}/", response_model=PlannerAgendaItem)
+@router.put("/items/{item_id}/", response_model=PlannerAgendaItemSchema)
 def update_agenda_item(
     item_id: int,
-    item: PlannerAgendaItemUpdate,
+    item: PlannerAgendaItemUpdateSchema,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     # First check if the item exists and belongs to the current user
     db_item = PlannerAgendaItemService.get_agenda_item(db, item_id=item_id, user_id=current_user.id)
@@ -149,7 +149,7 @@ def update_agenda_item(
 def delete_agenda_item(
     item_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     # First check if the item exists and belongs to the current user
     db_item = PlannerAgendaItemService.get_agenda_item(db, item_id=item_id, user_id=current_user.id)
@@ -165,9 +165,9 @@ def delete_agenda_item(
 
 @router.post("/items/reorder/", response_model=dict)
 def reorder_agenda_items(
-    request: ReorderAgendaItemsRequest,
+    request: ReorderAgendaItemsSchema,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     # First verify all items belong to the current user
     for item_id in request.ordered_item_ids:
@@ -182,11 +182,11 @@ def reorder_agenda_items(
     return {"detail": "Agenda items reordered successfully"}
 
 
-@router.get("/items/", response_model=dict[int, list[PlannerAgendaItem]])
+@router.get("/items/", response_model=dict[int, list[PlannerAgendaItemSchema]])
 def get_items_by_agendas(
     agenda_ids: list[int] = Query(..., description="List of agenda IDs"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     result = {}
     for agenda_id in agenda_ids:
@@ -202,12 +202,12 @@ def get_items_by_agendas(
     return result
 
 
-@router.post("/items/{item_id}/copy/", response_model=PlannerAgendaItem)
+@router.post("/items/{item_id}/copy/", response_model=PlannerAgendaItemSchema)
 def copy_agenda_item(
-    request: CopyAgendaItemRequest,
+    request: CopyAgendaItemSchema,
     item_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     # Check that the item exists and belongs to the current user
     db_item = PlannerAgendaItemService.get_agenda_item(db, item_id=item_id, user_id=current_user.id)
@@ -227,12 +227,12 @@ def copy_agenda_item(
     return new_db_item
 
 
-@router.post("/items/{item_id}/move/", response_model=PlannerAgendaItem)
+@router.post("/items/{item_id}/move/", response_model=PlannerAgendaItemSchema)
 def move_agenda_item(
-    request: MoveAgendaItemRequest,
+    request: MoveAgendaItemSchema,
     item_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     # Check that the item exists and belongs to the current user
     db_item = PlannerAgendaItemService.get_agenda_item(db, item_id=item_id, user_id=current_user.id)
@@ -255,9 +255,9 @@ def move_agenda_item(
 @router.post("/{agenda_id}/action/", response_model=dict)
 def agenda_action(
     agenda_id: int,
-    request: PlannerAgendaActionRequest,
+    request: PlannerAgendaActionSchema,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     """ Unified agenda-level action endpoint. Supported actions: delete_finished_items, sort_items_by_state. """
     # Verify agenda belongs to current user

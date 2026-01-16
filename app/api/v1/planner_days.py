@@ -4,21 +4,21 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.schemas.planner_day import (
-    PlannerDayItem, PlannerDayItemCreate, PlannerDayItemUpdate,
-    ReorderDayItemsRequest, CopyDayItemRequest, SnoozeDayItemRequest,
+    PlannerDayItemSchema, PlannerDayItemCreateSchema, PlannerDayItemUpdateSchema,
+    ReorderDayItemsSchema, CopyDayItemSchema, SnoozeDayItemSchema,
 )
 from app.services.planner_day_service import PlannerDayItemService
 from app.services.auth_service import AuthService
-from app.schemas.user import User
+from app.schemas.user import UserSchema
 
 router = APIRouter()
 
 
-@router.get("/items/", response_model=dict[str, list[PlannerDayItem]])
+@router.get("/items/", response_model=dict[str, list[PlannerDayItemSchema]])
 def get_items_by_days(
     days: list[date] = Query(..., description="List of dates in ISO format (YYYY-MM-DD)"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     """
     Get multiple days by their dates and return a dictionary with date strings as keys and their items as values.
@@ -32,21 +32,21 @@ def get_items_by_days(
     return result
 
 
-@router.post("/items/", response_model=PlannerDayItem)
+@router.post("/items/", response_model=PlannerDayItemSchema)
 def create_day_item(
-    item: PlannerDayItemCreate,
+    item: PlannerDayItemCreateSchema,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     return PlannerDayItemService.create_day_item(db=db, item=item, user_id=current_user.id)
 
 
-@router.put("/items/{item_id}/", response_model=PlannerDayItem)
+@router.put("/items/{item_id}/", response_model=PlannerDayItemSchema)
 def update_day_item(
     item_id: int,
-    item: PlannerDayItemUpdate,
+    item: PlannerDayItemUpdateSchema,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     # Validate that the item exists and belongs to the current user
     db_item = PlannerDayItemService.get_day_item(db, item_id=item_id, user_id=current_user.id)
@@ -61,7 +61,7 @@ def update_day_item(
 def delete_day_item(
     item_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     # Validate that the item exists and belongs to the current user
     db_item = PlannerDayItemService.get_day_item(db, item_id=item_id, user_id=current_user.id)
@@ -76,9 +76,9 @@ def delete_day_item(
 
 @router.post("/items/reorder/", response_model=dict)
 def reorder_day_items(
-    request: ReorderDayItemsRequest,
+    request: ReorderDayItemsSchema,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     # Validate that the items exist and belong to the current user
     for item_id in request.ordered_item_ids:
@@ -92,12 +92,12 @@ def reorder_day_items(
     return {"detail": "Items reordered successfully"}
 
 
-@router.post("/items/{item_id}/copy/", response_model=PlannerDayItem)
+@router.post("/items/{item_id}/copy/", response_model=PlannerDayItemSchema)
 def copy_day_item(
-    request: CopyDayItemRequest,
+    request: CopyDayItemSchema,
     item_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     # Validate that the item exists and belongs to the current user
     db_item = PlannerDayItemService.get_day_item(db, item_id=item_id, user_id=current_user.id)
@@ -110,12 +110,12 @@ def copy_day_item(
     return new_db_item
 
 
-@router.post("/items/{item_id}/snooze/", response_model=PlannerDayItem)
+@router.post("/items/{item_id}/snooze/", response_model=PlannerDayItemSchema)
 def snooze_day_item(
-    request: SnoozeDayItemRequest,
+    request: SnoozeDayItemSchema,
     item_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(AuthService.get_current_user)
+    current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
     # Validate that the item exists and belongs to the current user
     db_item = PlannerDayItemService.get_day_item(db, item_id=item_id, user_id=current_user.id)

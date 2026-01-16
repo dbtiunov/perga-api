@@ -4,15 +4,15 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.schemas.auth import TokenPayload
-from app.schemas.user import User
+from app.schemas.auth import TokenPayloadSchema
+from app.schemas.user import UserSchema
 from app.services.user_service import UserService
 from app.services.auth_utils import SECRET_KEY, ALGORITHM
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token/")
 
 
-async def get_current_user_from_token(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+async def get_current_user_from_token(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> UserSchema:
     """ Get the current user from the token """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -28,7 +28,7 @@ async def get_current_user_from_token(token: str = Depends(oauth2_scheme), db: S
         # Convert string user_id back to integer
         try:
             user_id = int(user_id_str)
-            token_data = TokenPayload(sub=user_id)
+            token_data = TokenPayloadSchema(sub=user_id)
         except (ValueError, TypeError):
             raise credentials_exception
 

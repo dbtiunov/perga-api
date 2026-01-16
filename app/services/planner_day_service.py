@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.const import PlannerItemState
 from app.core.db_utils import atomic_transaction, TransactionRollback
 from app.models.planner import PlannerDayItem
-from app.schemas.planner_day import PlannerDayItemCreate, PlannerDayItemUpdate
+from app.schemas.planner_day import PlannerDayItemCreateSchema, PlannerDayItemUpdateSchema
 from app.services.base_service import BaseService
 
 # Get logger for this module
@@ -41,7 +41,7 @@ class PlannerDayItemService(BaseService[PlannerDayItem]):
         return query.order_by(PlannerDayItem.index).all()
 
     @classmethod
-    def create_day_item(cls, db: Session, item: PlannerDayItemCreate, user_id: int) -> PlannerDayItem:
+    def create_day_item(cls, db: Session, item: PlannerDayItemCreateSchema, user_id: int) -> PlannerDayItem:
         new_index = cls.get_new_item_index(db, item.day, user_id)
 
         db_item = PlannerDayItem(**item.model_dump(), index=new_index, user_id=user_id)
@@ -53,7 +53,7 @@ class PlannerDayItemService(BaseService[PlannerDayItem]):
 
     @classmethod
     def update_day_item(
-        cls, db: Session, item_id: int, item: PlannerDayItemUpdate, user_id: int
+        cls, db: Session, item_id: int, item: PlannerDayItemUpdateSchema, user_id: int
     ) -> PlannerDayItem | None:
         db_item = cls.get_day_item(db, item_id, user_id)
         if not db_item:

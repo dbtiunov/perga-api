@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.const import PlannerItemState
 from app.models.planner import PlannerDayItem
-from app.schemas.planner_day import PlannerDayItemCreate, PlannerDayItemUpdate
+from app.schemas.planner_day import PlannerDayItemCreateSchema, PlannerDayItemUpdateSchema
 from app.services.planner_day_service import PlannerDayItemService
 
 
@@ -114,7 +114,7 @@ class TestPlannerDayItemService:
     def test_create_day_item(self, test_db: Session, test_user, test_day):
         """Test that create_day_item creates an item correctly"""
         # Create an item
-        item_create = PlannerDayItemCreate(
+        item_create = PlannerDayItemCreateSchema(
             text="Test Item",
             day=test_day
         )
@@ -144,7 +144,7 @@ class TestPlannerDayItemService:
         
         # Update the item
         tomorrow = test_day + timedelta(days=1)
-        item_update = PlannerDayItemUpdate(
+        item_update = PlannerDayItemUpdateSchema(
             text="Updated Item",
             state=PlannerItemState.COMPLETED,
             day=tomorrow

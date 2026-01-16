@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserCreateSchema, UserUpdateSchema
 from app.services.base_service import BaseService
 from app.services.auth_utils import get_password_hash, verify_password
 
@@ -22,7 +22,7 @@ class UserService(BaseService[User]):
         return cls.get_base_query(db).filter(User.id == user_id).first()
 
     @classmethod
-    def create_user(cls, db: Session, user_in: UserCreate) -> User:
+    def create_user(cls, db: Session, user_in: UserCreateSchema) -> User:
         # Check if user with this email or username already exists
         if cls.get_user_by_email(db, user_in.email):
             raise ValueError("Email already registered")
@@ -45,7 +45,7 @@ class UserService(BaseService[User]):
         return db_user
 
     @classmethod
-    def update_user(cls, db: Session, user_id: int, user_in: UserUpdate) -> User | None:
+    def update_user(cls, db: Session, user_id: int, user_in: UserUpdateSchema) -> User | None:
         db_user = cls.get_user_by_id(db, user_id)
         if not db_user:
             return None

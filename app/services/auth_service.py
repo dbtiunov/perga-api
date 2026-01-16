@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.models.user import User
-from app.schemas.auth import TokenPayload
+from app.schemas.auth import TokenPayloadSchema
 from app.services.user_service import UserService
 from app.services.auth_utils import (
     verify_password, create_access_token, create_refresh_token,
@@ -99,7 +99,7 @@ class AuthService:
         except (ValueError, TypeError):
             raise credentials_exception
 
-        token_data = TokenPayload(sub=user_id)
+        token_data = TokenPayloadSchema(sub=user_id)
         user = UserService.get_user_by_id(db, user_id=token_data.sub)
         if user is None:
             raise credentials_exception

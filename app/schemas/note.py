@@ -3,17 +3,17 @@ from pydantic import BaseModel
 
 
 # Notes Folder Schemas
-class NotesFolderCreate(BaseModel):
+class NotesFolderCreateSchema(BaseModel):
     name: str
     index: int | None = None
 
 
-class NotesFolderUpdate(BaseModel):
+class NotesFolderUpdateSchema(BaseModel):
     name: str | None = None
     index: int | None = None
 
 
-class NotesFolder(BaseModel):
+class NotesFolderSchema(BaseModel):
     id: int
     name: str
     index: int
@@ -23,21 +23,21 @@ class NotesFolder(BaseModel):
 
 
 # Note Schemas
-class NoteCreate(BaseModel):
+class NoteCreateSchema(BaseModel):
     title: str | None = None
     body: str
     index: int | None = None
     folder_id: int | None = None
 
 
-class NoteUpdate(BaseModel):
+class NoteUpdateSchema(BaseModel):
     title: str | None = None
     body: str | None = None
     index: int | None = None
     folder_id: int | None = None
 
 
-class Note(BaseModel):
+class NoteSchema(BaseModel):
     id: int
     title: str | None
     body: str

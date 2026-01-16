@@ -1,13 +1,13 @@
 from sqlalchemy.orm import Session
 
 from app.services.note_service import NoteService
-from app.schemas.note import NoteCreate, NoteUpdate
+from app.schemas.note import NoteCreateSchema, NoteUpdateSchema
 from app.models.note import Note
 
 
 class TestNoteService:
     def test_create_and_get_note(self, test_db: Session, test_user):
-        create = NoteCreate(title="My Note", body="Hello world")
+        create = NoteCreateSchema(title="My Note", body="Hello world")
         note = NoteService.create_note(test_db, user_id=test_user.id, note_in=create)
 
         assert note.id is not None
@@ -21,7 +21,7 @@ class TestNoteService:
 
     def test_list_notes_scoped_by_user(self, test_db: Session, test_user):
         # Create a note for the test_user
-        NoteService.create_note(test_db, user_id=test_user.id, note_in=NoteCreate(body="A"))
+        NoteService.create_note(test_db, user_id=test_user.id, note_in=NoteCreateSchema(body="A"))
         # Create a note for another user
         other = Note(title="Other", body="B", user_id=test_user.id + 1)
         test_db.add(other)
@@ -32,19 +32,19 @@ class TestNoteService:
         assert notes[0].user_id == test_user.id
 
     def test_update_note(self, test_db: Session, test_user):
-        note = NoteService.create_note(test_db, user_id=test_user.id, note_in=NoteCreate(title=None, body="old"))
+        note = NoteService.create_note(test_db, user_id=test_user.id, note_in=NoteCreateSchema(title=None, body="old"))
         updated = NoteService.update_note(
             test_db,
             note_id=note.id,
             user_id=test_user.id,
-            note_in=NoteUpdate(title="New Title", body="new")
+            note_in=NoteUpdateSchema(title="New Title", body="new")
         )
         assert updated is not None
         assert updated.title == "New Title"
         assert updated.body == "new"
 
     def test_delete_note_soft(self, test_db: Session, test_user):
-        note = NoteService.create_note(test_db, user_id=test_user.id, note_in=NoteCreate(body="to delete"))
+        note = NoteService.create_note(test_db, user_id=test_user.id, note_in=NoteCreateSchema(body="to delete"))
         ok = NoteService.delete_note(test_db, note_id=note.id, user_id=test_user.id)
         assert ok is True
 
