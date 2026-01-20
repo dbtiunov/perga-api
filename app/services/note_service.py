@@ -61,8 +61,8 @@ class NotesFolderService(BaseService[NotesFolder]):
         return cls.get_base_query(db).filter(NotesFolder.user_id == user_id, NotesFolder.id == folder_id).first()
 
     @classmethod
-    def get_new_folder_index(cls, db: Session, user_id: int) -> int:
-        query = cls.get_base_query(db).filter(NotesFolder.user_id == user_id)
+    def get_new_folder_index(cls, db: Session, user_id: int, parent_id: int | None = None) -> int:
+        query = cls.get_base_query(db).filter(NotesFolder.user_id == user_id, NotesFolder.parent_id == parent_id)
         max_folder = query.order_by(NotesFolder.index.desc()).first()
         return (max_folder.index + 1) if max_folder else 0
 
@@ -70,7 +70,7 @@ class NotesFolderService(BaseService[NotesFolder]):
     def create_folder(cls, db: Session, user_id: int, folder_in: NotesFolderCreateSchema) -> NotesFolder:
         data = folder_in.model_dump()
         if data.get('index') is None:
-            data['index'] = cls.get_new_folder_index(db, user_id)
+            data['index'] = cls.get_new_folder_index(db, user_id, parent_id=data.get('parent_id'))
         db_folder = NotesFolder(user_id=user_id, **data)
         db.add(db_folder)
         db.commit()

@@ -6,17 +6,20 @@ from pydantic import BaseModel
 class NotesFolderCreateSchema(BaseModel):
     name: str
     index: int | None = None
+    parent_id: int | None = None
 
 
 class NotesFolderUpdateSchema(BaseModel):
     name: str | None = None
     index: int | None = None
+    parent_id: int | None = None
 
 
 class NotesFolderSchema(BaseModel):
     id: int
     name: str
     index: int
+    parent_id: int | None = None
 
     class Config:
         from_attributes = True

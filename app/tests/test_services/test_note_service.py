@@ -51,3 +51,45 @@ class TestNoteService:
         # Should not appear in base query anymore
         found = NoteService.get_note(test_db, note_id=note.id, user_id=test_user.id)
         assert found is None
+
+
+class TestNotesFolderService:
+    def test_create_subfolder(self, test_db: Session, test_user):
+        from app.services.note_service import NotesFolderService
+        from app.schemas.note import NotesFolderCreateSchema
+
+        # 1. Create a parent folder
+        parent_create = NotesFolderCreateSchema(name="Parent Folder")
+        parent = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=parent_create)
+        
+        assert parent.id is not None
+        assert parent.name == "Parent Folder"
+        
+        # 2. Create a subfolder
+        subfolder_create = NotesFolderCreateSchema(name="Subfolder", parent_id=parent.id)
+        subfolder = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=subfolder_create)
+        
+        assert subfolder.id is not None
+        assert subfolder.parent_id == parent.id
+        
+        # 3. Verify relationship
+        test_db.refresh(parent)
+        assert len(parent.subfolders) == 1
+        assert parent.subfolders[0].id == subfolder.id
+        assert subfolder.parent.id == parent.id
+
+    def test_folder_index_scoped_by_parent(self, test_db: Session, test_user):
+        from app.services.note_service import NotesFolderService
+        from app.schemas.note import NotesFolderCreateSchema
+
+        # Root folders
+        f1 = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="F1"))
+        f2 = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="F2"))
+        assert f1.index == 0
+        assert f2.index == 1
+        
+        # Subfolders of f1
+        sf1 = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="SF1", parent_id=f1.id))
+        sf2 = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="SF2", parent_id=f1.id))
+        assert sf1.index == 0
+        assert sf2.index == 1

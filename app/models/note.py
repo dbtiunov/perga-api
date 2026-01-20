@@ -12,13 +12,16 @@ __all__ = (
 class NotesFolder(BaseModel):
     __tablename__ = 'notes_folders'
 
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    parent_id = Column(Integer, ForeignKey('notes_folders.id'), nullable=True, index=True)
     name = Column(String(length=256), nullable=False)
     index = Column(Integer, nullable=False, default=0)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
 
     # Relationships
     user = relationship('User', back_populates='notes_folders')
     notes = relationship('Note', back_populates='folder')
+    parent = relationship('NotesFolder', remote_side='NotesFolder.id', back_populates='subfolders')
+    subfolders = relationship('NotesFolder', back_populates='parent', cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<NotesFolder(id={self.id}, name={self.name!r}, user_id={self.user_id})>"
