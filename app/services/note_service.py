@@ -97,3 +97,14 @@ class NotesFolderService(BaseService[NotesFolder]):
         db_folder.mark_as_deleted()
         db.commit()
         return True
+
+    @classmethod
+    def get_folders_tree(cls, db: Session, user_id: int) -> list[NotesFolder]:
+        # Fetch all folders for the user to avoid multiple queries
+        # Root folders have parent_id=None
+        all_folders = cls.get_base_query(db).filter(NotesFolder.user_id == user_id).order_by(NotesFolder.index).all()
+        
+        # Filter for root folders in memory or via query
+        # Using the fetched folders to build the tree
+        root_folders = [f for f in all_folders if f.parent_id is None]
+        return root_folders

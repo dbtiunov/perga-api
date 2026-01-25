@@ -51,3 +51,18 @@ class NoteSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class NotesFolderTreeSchema(NotesFolderSchema):
+    subfolders: list['NotesFolderTreeSchema'] = []
+
+    class Config:
+        from_attributes = True
+
+
+class NotesFolderTreeWithNotesSchema(NotesFolderTreeSchema):
+    notes: list[NoteSchema] = []
+    subfolders: list['NotesFolderTreeWithNotesSchema'] = []
+
+    class Config:
+        from_attributes = True
