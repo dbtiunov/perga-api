@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
-from app.const import PlannerItemState
+from app.const.planner import PlannerItemState
 from app.core.db_utils import atomic_transaction, TransactionRollback
 from app.models.planner import PlannerAgendaItem
 from app.schemas.planner_agenda import PlannerAgendaItemCreateSchema, PlannerAgendaItemUpdateSchema

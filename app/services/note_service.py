@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.models.note import Note, NotesFolder
+from app.models.notes import Note, NotesFolder
 from app.services.base_service import BaseService
 from app.schemas.note import NoteCreateSchema, NoteUpdateSchema, NotesFolderCreateSchema, NotesFolderUpdateSchema
 

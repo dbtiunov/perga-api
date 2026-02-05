@@ -3,7 +3,7 @@ from datetime import date, timedelta
 
 from sqlalchemy.orm import Session
 
-from app.const import PlannerItemState
+from app.const.planner import PlannerItemState
 from app.models.planner import PlannerDayItem
 from app.schemas.planner_day import PlannerDayItemCreateSchema, PlannerDayItemUpdateSchema
 from app.services.planner_day_service import PlannerDayItemService

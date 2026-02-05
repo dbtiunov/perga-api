@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from app.const import WeekStartDay
+from app.const.planner import WeekStartDay
 
 
 class UserSchema(BaseModel):

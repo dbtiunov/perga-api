@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 
+from app.const.notes import NotesFolderType
 from app.models.base import BaseModel
 
 __all__ = (
@@ -16,6 +17,7 @@ class NotesFolder(BaseModel):
     parent_id = Column(Integer, ForeignKey('notes_folders.id'), nullable=True, index=True)
     name = Column(String(length=256), nullable=False)
     index = Column(Integer, nullable=False, default=0)
+    folder_type = Column(String(length=256), nullable=False, default=NotesFolderType.REGULAR)
 
     # Relationships
     user = relationship('User', back_populates='notes_folders')

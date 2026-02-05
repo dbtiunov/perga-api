@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Boolean
 from sqlalchemy.orm import relationship
 
-from app.const import WeekStartDay
+from app.const.planner import WeekStartDay
 from app.models.base import BaseModel
 
 

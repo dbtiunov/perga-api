@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.services.note_service import NoteService
 from app.schemas.note import NoteCreateSchema, NoteUpdateSchema
-from app.models.note import Note
+from app.models.notes import Note
 
 
 class TestNoteService:

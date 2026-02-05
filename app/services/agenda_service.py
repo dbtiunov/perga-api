@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy import func, case
 from sqlalchemy.orm import Session
 
-from app.const import PlannerAgendaType, PlannerItemState, PLANNER_CUSTOM_AGENDA_INDEX_MIN, PLANNER_MONTHLY_AGENDA_INDEX
+from app.const.planner import PlannerAgendaType, PlannerItemState, PLANNER_CUSTOM_AGENDA_INDEX_MIN, PLANNER_MONTHLY_AGENDA_INDEX
 from app.core.db_utils import atomic_transaction, TransactionRollback
 from app.models.planner import PlannerAgenda, PlannerAgendaItem
 from app.schemas.planner_agenda import PlannerAgendaCreateSchema, PlannerAgendaUpdateSchema

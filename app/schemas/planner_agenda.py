@@ -1,7 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel
 
-from app.const import PlannerAgendaType, PlannerItemState, PlannerAgendaAction
+from app.const.planner import PlannerAgendaType, PlannerItemState, PlannerAgendaAction
 from app.schemas.planner_day import BasePlannerItemBaseSchema
 
 

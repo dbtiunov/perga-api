@@ -2,7 +2,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.const import PlannerAgendaType, PlannerAgendaAction
+from app.const.planner import PlannerAgendaType, PlannerAgendaAction
 from app.services.auth_service import AuthService
 from app.core.database import get_db
 from app.schemas.planner_agenda import (
