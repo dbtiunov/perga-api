@@ -20,6 +20,7 @@ class NotesFolderSchema(BaseModel):
     name: str
     index: int
     parent_id: int | None = None
+    folder_type: str
 
     class Config:
         from_attributes = True

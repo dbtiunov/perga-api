@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
 
+from app.const.notes import NotesFolderType
 from app.models.notes import Note, NotesFolder
 from app.services.base_service import BaseService
-from app.schemas.note import NoteCreateSchema, NoteUpdateSchema, NotesFolderCreateSchema, NotesFolderUpdateSchema
+from app.schemas.notes import NoteCreateSchema, NoteUpdateSchema, NotesFolderCreateSchema, NotesFolderUpdateSchema
 
 
 class NoteService(BaseService[Note]):
@@ -48,6 +49,18 @@ class NoteService(BaseService[Note]):
         db.commit()
         return True
 
+    @classmethod
+    def move_to_trash(cls, db: Session, note_id: int, user_id: int) -> Note | None:
+        db_note = cls.get_note(db, note_id, user_id)
+        if not db_note:
+            return None
+
+        trash_folder = NotesFolderService.get_trash_folder(db, user_id)
+        db_note.folder_id = trash_folder.id
+        db.commit()
+        db.refresh(db_note)
+        return db_note
+
 
 class NotesFolderService(BaseService[NotesFolder]):
     model = NotesFolder
@@ -71,7 +84,11 @@ class NotesFolderService(BaseService[NotesFolder]):
         data = folder_in.model_dump()
         if data.get('index') is None:
             data['index'] = cls.get_new_folder_index(db, user_id, parent_id=data.get('parent_id'))
-        db_folder = NotesFolder(user_id=user_id, **data)
+        db_folder = NotesFolder(
+            user_id=user_id,
+            folder_type=NotesFolderType.REGULAR,
+            **data
+        )
         db.add(db_folder)
         db.commit()
         db.refresh(db_folder)
@@ -99,12 +116,43 @@ class NotesFolderService(BaseService[NotesFolder]):
         return True
 
     @classmethod
+    def get_trash_folder(cls, db: Session, user_id: int) -> NotesFolder:
+        trash_folder = cls.get_base_query(db).filter(
+            NotesFolder.user_id == user_id,
+            NotesFolder.folder_type == NotesFolderType.TRASH
+        ).first()
+        if not trash_folder:
+            trash_folder = NotesFolder(
+                user_id=user_id,
+                name="Trash",
+                folder_type=NotesFolderType.TRASH,
+                index=0
+            )
+            db.add(trash_folder)
+            db.commit()
+            db.refresh(trash_folder)
+        return trash_folder
+
+    @classmethod
     def get_folders_tree(cls, db: Session, user_id: int) -> list[NotesFolder]:
-        # Fetch all folders for the user to avoid multiple queries
-        # Root folders have parent_id=None
-        all_folders = cls.get_base_query(db).filter(NotesFolder.user_id == user_id).order_by(NotesFolder.index).all()
+        trash_folder = cls.get_trash_folder(db, user_id)
         
-        # Filter for root folders in memory or via query
-        # Using the fetched folders to build the tree
+        all_folders = cls.get_base_query(db).filter(
+            NotesFolder.user_id == user_id,
+            NotesFolder.folder_type == NotesFolderType.REGULAR
+        ).order_by(NotesFolder.index).all()
+        
         root_folders = [f for f in all_folders if f.parent_id is None]
-        return root_folders
+        return root_folders + [trash_folder]
+
+    @classmethod
+    def move_to_trash(cls, db: Session, folder_id: int, user_id: int) -> NotesFolder | None:
+        db_folder = cls.get_folder(db, folder_id, user_id)
+        if not db_folder:
+            return None
+        
+        trash_folder = cls.get_trash_folder(db, user_id)
+        db_folder.parent_id = trash_folder.id
+        db.commit()
+        db.refresh(db_folder)
+        return db_folder

@@ -2,8 +2,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.services.note_service import NoteService, NotesFolderService
-from app.schemas.note import NoteCreateSchema, NotesFolderCreateSchema
+from app.services.notes_service import NoteService, NotesFolderService
+from app.schemas.notes import NoteCreateSchema, NotesFolderCreateSchema
 from app.services.auth_service import AuthService
 
 def get_auth_headers(user_id: int):
@@ -29,7 +29,8 @@ def test_get_folders_tree(client: TestClient, test_db: Session, test_user):
     assert response.status_code == 200
     data = response.json()
     
-    assert len(data) == 2
+    # 2 regular roots + 1 trash root
+    assert len(data) == 3
     # Find Root 1
     root1 = next(f for f in data if f["name"] == "Root 1")
     assert len(root1["subfolders"]) == 1

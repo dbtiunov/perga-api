@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.schemas.note import (
-    NoteSchema as NoteSchema,
+from app.schemas.notes import (
+    NoteSchema,
     NoteCreateSchema,
     NoteUpdateSchema,
     NotesFolderSchema as NotesFolderSchema,
@@ -14,7 +14,7 @@ from app.schemas.note import (
 )
 from app.schemas.user import UserSchema
 from app.services.auth_service import AuthService
-from app.services.note_service import NoteService, NotesFolderService
+from app.services.notes_service import NoteService, NotesFolderService
 
 router = APIRouter()
 
@@ -58,16 +58,16 @@ def update_notes_folder(
     return folder
 
 
-@router.delete("/folders/{folder_id}/", response_model=dict)
-def delete_notes_folder(
+@router.post("/folders/{folder_id}/move-to-trash/", response_model=NotesFolderSchema)
+def move_folder_to_trash(
     folder_id: int,
     db: Session = Depends(get_db),
     current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
-    success = NotesFolderService.delete_folder(db, folder_id=folder_id, user_id=current_user.id)
-    if not success:
+    folder = NotesFolderService.move_to_trash(db, folder_id=folder_id, user_id=current_user.id)
+    if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
-    return {"detail": "Folder deleted"}
+    return folder
 
 
 @router.get("/", response_model=list[NoteSchema])
@@ -115,13 +115,13 @@ def update_note(
     return note
 
 
-@router.delete("/{note_id}/", response_model=dict)
-def delete_note(
+@router.post("/{note_id}/move-to-trash/", response_model=NoteSchema)
+def move_note_to_trash(
     note_id: int,
     db: Session = Depends(get_db),
     current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
-    success = NoteService.delete_note(db, note_id=note_id, user_id=current_user.id)
-    if not success:
+    note = NoteService.move_to_trash(db, note_id=note_id, user_id=current_user.id)
+    if not note:
         raise HTTPException(status_code=404, detail="Note not found")
-    return {"detail": "Note deleted"}
+    return note
