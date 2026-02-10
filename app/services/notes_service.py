@@ -156,3 +156,23 @@ class NotesFolderService(BaseService[NotesFolder]):
         db.commit()
         db.refresh(db_folder)
         return db_folder
+
+    @classmethod
+    def empty_trash(cls, db: Session, user_id: int) -> None:
+        trash_folder = cls.get_trash_folder(db, user_id)
+        
+        def mark_children_as_deleted(folder: NotesFolder):
+            """ Recursively mark subfolders and notes as deleted """
+            # Mark all notes in this folder as deleted
+            for note in folder.notes:
+                if not note.is_deleted:
+                    note.mark_as_deleted()
+            
+            # Recursively mark subfolders and their contents as deleted
+            for subfolder in folder.subfolders:
+                if not subfolder.is_deleted:
+                    subfolder.mark_as_deleted()
+                mark_children_as_deleted(subfolder)
+
+        mark_children_as_deleted(trash_folder)
+        db.commit()

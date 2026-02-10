@@ -122,3 +122,19 @@ class TestNotesFolderService:
         test_db.refresh(folder)
         trash_folder = NotesFolderService.get_trash_folder(test_db, user_id=test_user.id)
         assert folder.parent_id == trash_folder.id
+
+    def test_empty_trash(self, test_db: Session, test_user):
+        from app.services.notes_service import NotesFolderService, NoteService
+        from app.schemas.notes import NotesFolderCreateSchema, NoteCreateSchema
+
+        folder = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="To Trash"))
+        note = NoteService.create_note(test_db, user_id=test_user.id, note_in=NoteCreateSchema(title="Note", body="Body", folder_id=folder.id))
+        
+        NotesFolderService.move_to_trash(test_db, folder_id=folder.id, user_id=test_user.id)
+        
+        NotesFolderService.empty_trash(test_db, user_id=test_user.id)
+        
+        test_db.refresh(folder)
+        test_db.refresh(note)
+        assert folder.is_deleted
+        assert note.is_deleted

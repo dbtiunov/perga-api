@@ -70,6 +70,15 @@ def move_folder_to_trash(
     return folder
 
 
+@router.post("/empty-trash/")
+def empty_trash(
+    db: Session = Depends(get_db),
+    current_user: UserSchema = Depends(AuthService.get_current_user)
+):
+    NotesFolderService.empty_trash(db, user_id=current_user.id)
+    return {"message": "Trash emptied"}
+
+
 @router.get("/", response_model=list[NoteSchema])
 def list_notes(
     folder_id: int | None = Query(None, description="Filter notes by folder_id"),
