@@ -13,11 +13,11 @@ def get_auth_headers(user_id: int):
 def test_get_folders_tree(client: TestClient, test_db: Session, test_user):
     # 1. Setup folders and notes
     # Root folder 1
-    f1 = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="Root 1"))
+    f1 = NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=NotesFolderCreateSchema(name="Root 1"))
     # Subfolder of Root 1
-    sf1 = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="Sub 1", parent_id=f1.id))
+    sf1 = NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=NotesFolderCreateSchema(name="Sub 1", parent_id=f1.id))
     # Root folder 2
-    f2 = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="Root 2"))
+    f2 = NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=NotesFolderCreateSchema(name="Root 2"))
     
     # Note in sf1
     NoteService.create_note(test_db, user_id=test_user.id, note_in=NoteCreateSchema(title="Note 1", body="Content 1", folder_id=sf1.id))

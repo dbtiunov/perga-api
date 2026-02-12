@@ -21,8 +21,17 @@ class NoteService(BaseService[Note]):
         return cls.get_base_query(db).filter(Note.user_id == user_id, Note.id == note_id).first()
 
     @classmethod
+    def get_new_note_index(cls, db: Session, user_id: int, folder_id: int | None = None) -> int:
+        query = cls.get_base_query(db).filter(Note.user_id == user_id, Note.folder_id == folder_id)
+        max_index_note = query.order_by(Note.index.desc()).first()
+        return (max_index_note.index + 1) if max_index_note else 0
+
+    @classmethod
     def create_note(cls, db: Session, user_id: int, note_in: NoteCreateSchema) -> Note:
-        db_note = Note(user_id=user_id, **note_in.model_dump())
+        data = note_in.model_dump()
+        if data.get('index') is None:
+            data['index'] = cls.get_new_note_index(db, user_id, folder_id=data.get('folder_id'))
+        db_note = Note(user_id=user_id, **data)
         db.add(db_note)
         db.commit()
         db.refresh(db_note)
@@ -34,6 +43,11 @@ class NoteService(BaseService[Note]):
         if not db_note:
             return None
         update_data = note_in.model_dump(exclude_unset=True)
+        
+        # If folder_id is changed and index is not provided, move to the end of the new folder
+        if db_note.folder_id != update_data.get('folder_id', -1) and 'index' not in update_data:
+            update_data['index'] = cls.get_new_note_index(db, user_id, folder_id=update_data['folder_id'])
+            
         for field, value in update_data.items():
             setattr(db_note, field, value)
         db.commit()
@@ -76,12 +90,12 @@ class NotesFolderService(BaseService[NotesFolder]):
     @classmethod
     def get_new_folder_index(cls, db: Session, user_id: int, parent_id: int | None = None) -> int:
         query = cls.get_base_query(db).filter(NotesFolder.user_id == user_id, NotesFolder.parent_id == parent_id)
-        max_folder = query.order_by(NotesFolder.index.desc()).first()
-        return (max_folder.index + 1) if max_folder else 0
+        max_index_folder = query.order_by(NotesFolder.index.desc()).first()
+        return (max_index_folder.index + 1) if max_index_folder else 0
 
     @classmethod
-    def create_folder(cls, db: Session, user_id: int, folder_in: NotesFolderCreateSchema) -> NotesFolder:
-        data = folder_in.model_dump()
+    def create_folder(cls, db: Session, user_id: int, request_data: NotesFolderCreateSchema) -> NotesFolder:
+        data = request_data.model_dump()
         if data.get('index') is None:
             data['index'] = cls.get_new_folder_index(db, user_id, parent_id=data.get('parent_id'))
         db_folder = NotesFolder(
@@ -95,11 +109,16 @@ class NotesFolderService(BaseService[NotesFolder]):
         return db_folder
 
     @classmethod
-    def update_folder(cls, db: Session, folder_id: int, user_id: int, folder_in: NotesFolderUpdateSchema) -> NotesFolder | None:
+    def update_folder(cls, db: Session, folder_id: int, user_id: int, request_data: NotesFolderUpdateSchema) -> NotesFolder | None:
         db_folder = cls.get_folder(db, folder_id, user_id)
         if not db_folder:
             return None
-        update_data = folder_in.model_dump(exclude_unset=True)
+        update_data = request_data.model_dump(exclude_unset=True)
+        
+        # If parent_id is changed and index is not provided, move to the end of the new parent
+        if db_folder.parent_id != update_data.get('parent_id', -1)  and 'index' not in update_data:
+            update_data['index'] = cls.get_new_folder_index(db, user_id, parent_id=update_data['parent_id'])
+            
         for field, value in update_data.items():
             setattr(db_folder, field, value)
         db.commit()

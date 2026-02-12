@@ -60,14 +60,14 @@ class TestNotesFolderService:
 
         # 1. Create a parent folder
         parent_create = NotesFolderCreateSchema(name="Parent Folder")
-        parent = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=parent_create)
+        parent = NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=parent_create)
         
         assert parent.id is not None
         assert parent.name == "Parent Folder"
         
         # 2. Create a subfolder
         subfolder_create = NotesFolderCreateSchema(name="Subfolder", parent_id=parent.id)
-        subfolder = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=subfolder_create)
+        subfolder = NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=subfolder_create)
         
         assert subfolder.id is not None
         assert subfolder.parent_id == parent.id
@@ -83,14 +83,14 @@ class TestNotesFolderService:
         from app.schemas.notes import NotesFolderCreateSchema
 
         # Root folders
-        f1 = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="F1"))
-        f2 = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="F2"))
+        f1 = NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=NotesFolderCreateSchema(name="F1"))
+        f2 = NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=NotesFolderCreateSchema(name="F2"))
         assert f1.index == 0
         assert f2.index == 1
         
         # Subfolders of f1
-        sf1 = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="SF1", parent_id=f1.id))
-        sf2 = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="SF2", parent_id=f1.id))
+        sf1 = NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=NotesFolderCreateSchema(name="SF1", parent_id=f1.id))
+        sf2 = NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=NotesFolderCreateSchema(name="SF2", parent_id=f1.id))
         assert sf1.index == 0
         assert sf2.index == 1
 
@@ -100,7 +100,7 @@ class TestNotesFolderService:
         from app.const.notes import NotesFolderType
 
         # Create a regular folder
-        NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="Regular"))
+        NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=NotesFolderCreateSchema(name="Regular"))
 
         tree = NotesFolderService.get_folders_tree(test_db, user_id=test_user.id)
         
@@ -116,7 +116,7 @@ class TestNotesFolderService:
         from app.schemas.notes import NotesFolderCreateSchema
         from app.const.notes import NotesFolderType
 
-        folder = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="To Trash"))
+        folder = NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=NotesFolderCreateSchema(name="To Trash"))
         NotesFolderService.move_to_trash(test_db, folder_id=folder.id, user_id=test_user.id)
         
         test_db.refresh(folder)
@@ -127,7 +127,7 @@ class TestNotesFolderService:
         from app.services.notes_service import NotesFolderService, NoteService
         from app.schemas.notes import NotesFolderCreateSchema, NoteCreateSchema
 
-        folder = NotesFolderService.create_folder(test_db, user_id=test_user.id, folder_in=NotesFolderCreateSchema(name="To Trash"))
+        folder = NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=NotesFolderCreateSchema(name="To Trash"))
         note = NoteService.create_note(test_db, user_id=test_user.id, note_in=NoteCreateSchema(title="Note", body="Body", folder_id=folder.id))
         
         NotesFolderService.move_to_trash(test_db, folder_id=folder.id, user_id=test_user.id)

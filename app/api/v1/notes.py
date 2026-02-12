@@ -38,21 +38,21 @@ def get_folders_tree(
 
 @router.post("/folders/", response_model=NotesFolderSchema)
 def create_notes_folder(
-    folder_in: NotesFolderCreateSchema,
+    request_data: NotesFolderCreateSchema,
     db: Session = Depends(get_db),
     current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
-    return NotesFolderService.create_folder(db, user_id=current_user.id, folder_in=folder_in)
+    return NotesFolderService.create_folder(db, user_id=current_user.id, request_data=request_data)
 
 
 @router.patch("/folders/{folder_id}/", response_model=NotesFolderSchema)
 def update_notes_folder(
     folder_id: int,
-    folder_in: NotesFolderUpdateSchema,
+    request_data: NotesFolderUpdateSchema,
     db: Session = Depends(get_db),
     current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
-    folder = NotesFolderService.update_folder(db, folder_id=folder_id, user_id=current_user.id, folder_in=folder_in)
+    folder = NotesFolderService.update_folder(db, folder_id=folder_id, user_id=current_user.id, request_data=request_data)
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
     return folder
