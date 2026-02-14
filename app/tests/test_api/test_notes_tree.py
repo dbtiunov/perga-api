@@ -2,8 +2,10 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.services.notes_service import NoteService, NotesFolderService
-from app.schemas.notes import NoteCreateSchema, NotesFolderCreateSchema
+from app.services.notes_service import NoteService
+from app.services.notes_folders_service import NotesFolderService
+from app.schemas.notes import NoteCreateSchema
+from app.schemas.notes_folders import NotesFolderCreateSchema
 from app.services.auth_service import AuthService
 
 def get_auth_headers(user_id: int):

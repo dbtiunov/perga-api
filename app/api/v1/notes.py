@@ -6,70 +6,12 @@ from app.schemas.notes import (
     NoteSchema,
     NoteCreateSchema,
     NoteUpdateSchema,
-    NotesFolderSchema as NotesFolderSchema,
-    NotesFolderCreateSchema,
-    NotesFolderUpdateSchema,
-    NotesFolderTreeSchema,
-    NotesFolderTreeWithNotesSchema,
-    NotesFoldersResponseSchema,
 )
 from app.schemas.user import UserSchema
 from app.services.auth_service import AuthService
-from app.services.notes_service import NoteService, NotesFolderService
+from app.services.notes_service import NoteService
 
 router = APIRouter()
-
-# Notes Folders endpoints
-@router.get("/folders/", response_model=NotesFoldersResponseSchema)
-def get_folders(
-    include_notes: bool = Query(False, description="Include notes in the tree"),
-    db: Session = Depends(get_db),
-    current_user: UserSchema = Depends(AuthService.get_current_user)
-):
-    return NotesFolderService.get_folders(db, user_id=current_user.id)
-
-
-@router.post("/folders/", response_model=NotesFolderSchema)
-def create_notes_folder(
-    request_data: NotesFolderCreateSchema,
-    db: Session = Depends(get_db),
-    current_user: UserSchema = Depends(AuthService.get_current_user)
-):
-    return NotesFolderService.create_folder(db, user_id=current_user.id, request_data=request_data)
-
-
-@router.patch("/folders/{folder_id}/", response_model=NotesFolderSchema)
-def update_notes_folder(
-    folder_id: int,
-    request_data: NotesFolderUpdateSchema,
-    db: Session = Depends(get_db),
-    current_user: UserSchema = Depends(AuthService.get_current_user)
-):
-    folder = NotesFolderService.update_folder(db, folder_id=folder_id, user_id=current_user.id, request_data=request_data)
-    if not folder:
-        raise HTTPException(status_code=404, detail="Folder not found")
-    return folder
-
-
-@router.post("/folders/{folder_id}/move-to-trash/", response_model=NotesFolderSchema)
-def move_folder_to_trash(
-    folder_id: int,
-    db: Session = Depends(get_db),
-    current_user: UserSchema = Depends(AuthService.get_current_user)
-):
-    folder = NotesFolderService.move_to_trash(db, folder_id=folder_id, user_id=current_user.id)
-    if not folder:
-        raise HTTPException(status_code=404, detail="Folder not found")
-    return folder
-
-
-@router.post("/empty-trash/")
-def empty_trash(
-    db: Session = Depends(get_db),
-    current_user: UserSchema = Depends(AuthService.get_current_user)
-):
-    NotesFolderService.empty_trash(db, user_id=current_user.id)
-    return {"message": "Trash emptied"}
 
 
 @router.get("/", response_model=list[NoteSchema])

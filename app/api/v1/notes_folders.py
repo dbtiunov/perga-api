@@ -1,0 +1,67 @@
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.schemas.notes_folders import (
+    NotesFolderSchema,
+    NotesFolderCreateSchema,
+    NotesFolderUpdateSchema,
+    NotesFoldersResponseSchema,
+)
+from app.schemas.user import UserSchema
+from app.services.auth_service import AuthService
+from app.services.notes_folders_service import NotesFolderService
+
+router = APIRouter()
+
+
+@router.get("/", response_model=NotesFoldersResponseSchema)
+def get_folders(
+    include_notes: bool = Query(False, description="Include notes in the tree"),
+    db: Session = Depends(get_db),
+    current_user: UserSchema = Depends(AuthService.get_current_user)
+):
+    return NotesFolderService.get_folders(db, user_id=current_user.id)
+
+
+@router.post("/", response_model=NotesFolderSchema)
+def create_notes_folder(
+    request_data: NotesFolderCreateSchema,
+    db: Session = Depends(get_db),
+    current_user: UserSchema = Depends(AuthService.get_current_user)
+):
+    return NotesFolderService.create_folder(db, user_id=current_user.id, request_data=request_data)
+
+
+@router.patch("/{folder_id}/", response_model=NotesFolderSchema)
+def update_notes_folder(
+    folder_id: int,
+    request_data: NotesFolderUpdateSchema,
+    db: Session = Depends(get_db),
+    current_user: UserSchema = Depends(AuthService.get_current_user)
+):
+    folder = NotesFolderService.update_folder(db, folder_id=folder_id, user_id=current_user.id, request_data=request_data)
+    if not folder:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    return folder
+
+
+@router.post("/{folder_id}/move-to-trash/", response_model=NotesFolderSchema)
+def move_folder_to_trash(
+    folder_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserSchema = Depends(AuthService.get_current_user)
+):
+    folder = NotesFolderService.move_to_trash(db, folder_id=folder_id, user_id=current_user.id)
+    if not folder:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    return folder
+
+
+@router.post("/empty-trash/")
+def empty_trash(
+    db: Session = Depends(get_db),
+    current_user: UserSchema = Depends(AuthService.get_current_user)
+):
+    NotesFolderService.empty_trash(db, user_id=current_user.id)
+    return {"message": "Trash emptied"}

@@ -55,8 +55,8 @@ class TestNoteService:
 
 class TestNotesFolderService:
     def test_create_subfolder(self, test_db: Session, test_user):
-        from app.services.notes_service import NotesFolderService
-        from app.schemas.notes import NotesFolderCreateSchema
+        from app.services.notes_folders_service import NotesFolderService
+        from app.schemas.notes_folders import NotesFolderCreateSchema
 
         # 1. Create a parent folder
         parent_create = NotesFolderCreateSchema(name="Parent Folder")
@@ -79,8 +79,8 @@ class TestNotesFolderService:
         assert subfolder.parent.id == parent.id
 
     def test_folder_index_scoped_by_parent(self, test_db: Session, test_user):
-        from app.services.notes_service import NotesFolderService
-        from app.schemas.notes import NotesFolderCreateSchema
+        from app.services.notes_folders_service import NotesFolderService
+        from app.schemas.notes_folders import NotesFolderCreateSchema
 
         # Root folders
         f1 = NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=NotesFolderCreateSchema(name="F1"))
@@ -95,8 +95,8 @@ class TestNotesFolderService:
         assert sf2.index == 1
 
     def test_get_folders_includes_trash_and_root(self, test_db: Session, test_user):
-        from app.services.notes_service import NotesFolderService
-        from app.schemas.notes import NotesFolderCreateSchema
+        from app.services.notes_folders_service import NotesFolderService
+        from app.schemas.notes_folders import NotesFolderCreateSchema
         from app.const.notes import NotesFolderType
 
         # Create a regular folder (will be under Root)
@@ -114,8 +114,8 @@ class TestNotesFolderService:
         assert data["root_folder"].subfolders[0].name == "Regular"
 
     def test_move_to_trash_service(self, test_db: Session, test_user):
-        from app.services.notes_service import NotesFolderService
-        from app.schemas.notes import NotesFolderCreateSchema
+        from app.services.notes_folders_service import NotesFolderService
+        from app.schemas.notes_folders import NotesFolderCreateSchema
         from app.const.notes import NotesFolderType
 
         folder = NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=NotesFolderCreateSchema(name="To Trash"))
@@ -126,8 +126,10 @@ class TestNotesFolderService:
         assert folder.parent_id == trash_folder.id
 
     def test_empty_trash(self, test_db: Session, test_user):
-        from app.services.notes_service import NotesFolderService, NoteService
-        from app.schemas.notes import NotesFolderCreateSchema, NoteCreateSchema
+        from app.services.notes_folders_service import NotesFolderService
+        from app.services.notes_service import NoteService
+        from app.schemas.notes_folders import NotesFolderCreateSchema
+        from app.schemas.notes import NoteCreateSchema
 
         folder = NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=NotesFolderCreateSchema(name="To Trash"))
         note = NoteService.create_note(test_db, user_id=test_user.id, note_in=NoteCreateSchema(title="Note", body="Body", folder_id=folder.id))
