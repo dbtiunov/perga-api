@@ -11,6 +11,7 @@ from app.schemas.notes import (
     NotesFolderUpdateSchema,
     NotesFolderTreeSchema,
     NotesFolderTreeWithNotesSchema,
+    NotesFoldersResponseSchema,
 )
 from app.schemas.user import UserSchema
 from app.services.auth_service import AuthService
@@ -19,21 +20,13 @@ from app.services.notes_service import NoteService, NotesFolderService
 router = APIRouter()
 
 # Notes Folders endpoints
-@router.get("/folders/", response_model=list[NotesFolderSchema])
-def list_notes_folders(
-    db: Session = Depends(get_db),
-    current_user: UserSchema = Depends(AuthService.get_current_user)
-):
-    return NotesFolderService.list_folders(db, user_id=current_user.id)
-
-
-@router.get("/folders/tree/", response_model=list[NotesFolderTreeSchema | NotesFolderTreeWithNotesSchema])
-def get_folders_tree(
+@router.get("/folders/", response_model=NotesFoldersResponseSchema)
+def get_folders(
     include_notes: bool = Query(False, description="Include notes in the tree"),
     db: Session = Depends(get_db),
     current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
-    return NotesFolderService.get_folders_tree(db, user_id=current_user.id)
+    return NotesFolderService.get_folders(db, user_id=current_user.id)
 
 
 @router.post("/folders/", response_model=NotesFolderSchema)

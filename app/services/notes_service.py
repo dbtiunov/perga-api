@@ -29,6 +29,10 @@ class NoteService(BaseService[Note]):
     @classmethod
     def create_note(cls, db: Session, user_id: int, note_in: NoteCreateSchema) -> Note:
         data = note_in.model_dump()
+        if data.get('folder_id') is None:
+            root_folder = NotesFolderService.get_root_folder(db, user_id)
+            data['folder_id'] = root_folder.id
+            
         if data.get('index') is None:
             data['index'] = cls.get_new_note_index(db, user_id, folder_id=data.get('folder_id'))
         db_note = Note(user_id=user_id, **data)
@@ -45,7 +49,7 @@ class NoteService(BaseService[Note]):
         update_data = note_in.model_dump(exclude_unset=True)
         
         # If folder_id is changed and index is not provided, move to the end of the new folder
-        if db_note.folder_id != update_data.get('folder_id', -1) and 'index' not in update_data:
+        if 'folder_id' in update_data and db_note.folder_id != update_data['folder_id'] and 'index' not in update_data:
             update_data['index'] = cls.get_new_note_index(db, user_id, folder_id=update_data['folder_id'])
             
         for field, value in update_data.items():
@@ -96,6 +100,10 @@ class NotesFolderService(BaseService[NotesFolder]):
     @classmethod
     def create_folder(cls, db: Session, user_id: int, request_data: NotesFolderCreateSchema) -> NotesFolder:
         data = request_data.model_dump()
+        if data.get('parent_id') is None:
+            root_folder = cls.get_root_folder(db, user_id)
+            data['parent_id'] = root_folder.id
+            
         if data.get('index') is None:
             data['index'] = cls.get_new_folder_index(db, user_id, parent_id=data.get('parent_id'))
         db_folder = NotesFolder(
@@ -116,7 +124,7 @@ class NotesFolderService(BaseService[NotesFolder]):
         update_data = request_data.model_dump(exclude_unset=True)
         
         # If parent_id is changed and index is not provided, move to the end of the new parent
-        if db_folder.parent_id != update_data.get('parent_id', -1)  and 'index' not in update_data:
+        if 'parent_id' in update_data and db_folder.parent_id != update_data['parent_id'] and 'index' not in update_data:
             update_data['index'] = cls.get_new_folder_index(db, user_id, parent_id=update_data['parent_id'])
             
         for field, value in update_data.items():
@@ -145,7 +153,7 @@ class NotesFolderService(BaseService[NotesFolder]):
                 user_id=user_id,
                 name="Trash",
                 folder_type=NotesFolderType.TRASH,
-                index=0
+                index=1
             )
             db.add(trash_folder)
             db.commit()
@@ -153,16 +161,31 @@ class NotesFolderService(BaseService[NotesFolder]):
         return trash_folder
 
     @classmethod
-    def get_folders_tree(cls, db: Session, user_id: int) -> list[NotesFolder]:
-        trash_folder = cls.get_trash_folder(db, user_id)
-        
-        all_folders = cls.get_base_query(db).filter(
+    def get_root_folder(cls, db: Session, user_id: int) -> NotesFolder:
+        root_folder = cls.get_base_query(db).filter(
             NotesFolder.user_id == user_id,
-            NotesFolder.folder_type == NotesFolderType.REGULAR
-        ).order_by(NotesFolder.index).all()
-        
-        root_folders = [f for f in all_folders if f.parent_id is None]
-        return root_folders + [trash_folder]
+            NotesFolder.folder_type == NotesFolderType.ROOT
+        ).first()
+        if not root_folder:
+            root_folder = NotesFolder(
+                user_id=user_id,
+                name="Root",
+                folder_type=NotesFolderType.ROOT,
+                index=0
+            )
+            db.add(root_folder)
+            db.commit()
+            db.refresh(root_folder)
+        return root_folder
+
+    @classmethod
+    def get_folders(cls, db: Session, user_id: int) -> dict:
+        root_folder = cls.get_root_folder(db, user_id)
+        trash_folder = cls.get_trash_folder(db, user_id)
+        return {
+            "root_folder": root_folder,
+            "trash_folder": trash_folder
+        }
 
     @classmethod
     def move_to_trash(cls, db: Session, folder_id: int, user_id: int) -> NotesFolder | None:

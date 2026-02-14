@@ -67,3 +67,8 @@ class NotesFolderTreeWithNotesSchema(NotesFolderTreeSchema):
 
     class Config:
         from_attributes = True
+
+
+class NotesFoldersResponseSchema(BaseModel):
+    root_folder: NotesFolderTreeSchema | NotesFolderTreeWithNotesSchema
+    trash_folder: NotesFolderTreeSchema | NotesFolderTreeWithNotesSchema

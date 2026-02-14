@@ -94,22 +94,24 @@ class TestNotesFolderService:
         assert sf1.index == 0
         assert sf2.index == 1
 
-    def test_get_folders_tree_includes_trash(self, test_db: Session, test_user):
+    def test_get_folders_includes_trash_and_root(self, test_db: Session, test_user):
         from app.services.notes_service import NotesFolderService
         from app.schemas.notes import NotesFolderCreateSchema
         from app.const.notes import NotesFolderType
 
-        # Create a regular folder
+        # Create a regular folder (will be under Root)
         NotesFolderService.create_folder(test_db, user_id=test_user.id, request_data=NotesFolderCreateSchema(name="Regular"))
 
-        tree = NotesFolderService.get_folders_tree(test_db, user_id=test_user.id)
+        data = NotesFolderService.get_folders(test_db, user_id=test_user.id)
         
-        # Should have Regular and Trash
-        assert len(tree) == 2
-        trash = next(f for f in tree if f.folder_type == NotesFolderType.TRASH)
-        assert trash.name == "Trash"
-        regular = next(f for f in tree if f.folder_type == NotesFolderType.REGULAR)
-        assert regular.name == "Regular"
+        assert "root_folder" in data
+        assert "trash_folder" in data
+        
+        assert data["root_folder"].folder_type == NotesFolderType.ROOT
+        assert data["trash_folder"].folder_type == NotesFolderType.TRASH
+        
+        assert len(data["root_folder"].subfolders) == 1
+        assert data["root_folder"].subfolders[0].name == "Regular"
 
     def test_move_to_trash_service(self, test_db: Session, test_user):
         from app.services.notes_service import NotesFolderService
