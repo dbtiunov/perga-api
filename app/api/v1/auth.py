@@ -11,9 +11,9 @@ from app.services.auth_service import AuthService
 router = APIRouter()
 
 @router.post("/signup/", response_model=UserSchema)
-def signup(user_in: UserCreateSchema, db: Session = Depends(get_db)):
+def signup(request_data: UserCreateSchema, db: Session = Depends(get_db)):
     try:
-        user = UserService.create_user(db=db, user_in=user_in)
+        user = UserService.create_user(db=db, create_data=request_data)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     return user
@@ -77,11 +77,11 @@ def get_current_user(current_user: UserSchema = Depends(AuthService.get_current_
 
 @router.put("/user/", response_model=UserSchema)
 def update_user(
-    user_update: UserUpdateSchema,
+    request_data: UserUpdateSchema,
     current_user: UserSchema = Depends(AuthService.get_current_user),
     db: Session = Depends(get_db)
 ):
-    updated_user = UserService.update_user(db=db, user_id=current_user.id, user_in=user_update)
+    updated_user = UserService.update_user(db=db, user_id=current_user.id, update_data=request_data)
     if not updated_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

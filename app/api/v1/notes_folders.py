@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -17,7 +17,6 @@ router = APIRouter()
 
 @router.get("/", response_model=NotesFoldersResponseSchema)
 def get_folders(
-    include_notes: bool = Query(False, description="Include notes in the tree"),
     db: Session = Depends(get_db),
     current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
@@ -30,7 +29,7 @@ def create_notes_folder(
     db: Session = Depends(get_db),
     current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
-    return NotesFolderService.create_folder(db, user_id=current_user.id, request_data=request_data)
+    return NotesFolderService.create_folder(db, user_id=current_user.id, create_data=request_data)
 
 
 @router.patch("/{folder_id}/", response_model=NotesFolderSchema)
@@ -40,7 +39,9 @@ def update_notes_folder(
     db: Session = Depends(get_db),
     current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
-    folder = NotesFolderService.update_folder(db, folder_id=folder_id, user_id=current_user.id, request_data=request_data)
+    folder = NotesFolderService.update_folder(
+        db, folder_id=folder_id, user_id=current_user.id, update_data=request_data
+    )
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
     return folder

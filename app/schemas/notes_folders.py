@@ -1,46 +1,38 @@
 from pydantic import BaseModel
-from .notes_base import NoteSchema
+
+from app.schemas.notes import NoteSchema
 
 
-# Notes Folder Schemas
 class NotesFolderCreateSchema(BaseModel):
+    parent_id: int
     name: str
-    index: int | None = None
-    parent_id: int | None = None
 
 
 class NotesFolderUpdateSchema(BaseModel):
+    parent_id: int | None = None
     name: str | None = None
     index: int | None = None
-    parent_id: int | None = None
 
 
 class NotesFolderSchema(BaseModel):
     id: int
+    parent_id: int
+    folder_type: str
     name: str
     index: int
-    parent_id: int | None = None
-    folder_type: str
 
     class Config:
         from_attributes = True
 
 
-class NotesFolderTreeSchema(NotesFolderSchema):
-    subfolders: list['NotesFolderTreeSchema'] = []
-
-    class Config:
-        from_attributes = True
-
-
-class NotesFolderTreeWithNotesSchema(NotesFolderTreeSchema):
+class NotesFolderRespsonseSchema(BaseModel):
     notes: list[NoteSchema] = []
-    subfolders: list['NotesFolderTreeWithNotesSchema'] = []
+    subfolders: list['NotesFolderRespsonseSchema'] = []
 
     class Config:
         from_attributes = True
 
 
 class NotesFoldersResponseSchema(BaseModel):
-    root_folder: NotesFolderTreeSchema | NotesFolderTreeWithNotesSchema
-    trash_folder: NotesFolderTreeSchema | NotesFolderTreeWithNotesSchema
+    root_folder: NotesFolderRespsonseSchema
+    trash_folder: NotesFolderRespsonseSchema

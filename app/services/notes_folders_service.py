@@ -2,16 +2,12 @@ from sqlalchemy.orm import Session
 
 from app.const.notes import NotesFolderType
 from app.models.notes import NotesFolder
-from app.services.base_service import BaseService
 from app.schemas.notes_folders import NotesFolderCreateSchema, NotesFolderUpdateSchema
+from app.services.base_service import BaseService
 
 
 class NotesFolderService(BaseService[NotesFolder]):
     model = NotesFolder
-
-    @classmethod
-    def list_folders(cls, db: Session, user_id: int) -> list[NotesFolder]:
-        return cls.get_base_query(db).filter(NotesFolder.user_id == user_id).order_by(NotesFolder.index).all()
 
     @classmethod
     def get_folder(cls, db: Session, folder_id: int, user_id: int) -> NotesFolder | None:
@@ -24,14 +20,15 @@ class NotesFolderService(BaseService[NotesFolder]):
         return (max_index_folder.index + 1) if max_index_folder else 0
 
     @classmethod
-    def create_folder(cls, db: Session, user_id: int, request_data: NotesFolderCreateSchema) -> NotesFolder:
-        data = request_data.model_dump()
+    def create_folder(cls, db: Session, user_id: int, create_data: NotesFolderCreateSchema) -> NotesFolder:
+        data = create_data.model_dump()
         if data.get('parent_id') is None:
             root_folder = cls.get_root_folder(db, user_id)
             data['parent_id'] = root_folder.id
             
         if data.get('index') is None:
             data['index'] = cls.get_new_folder_index(db, user_id, parent_id=data.get('parent_id'))
+
         db_folder = NotesFolder(
             user_id=user_id,
             folder_type=NotesFolderType.REGULAR,
@@ -43,14 +40,20 @@ class NotesFolderService(BaseService[NotesFolder]):
         return db_folder
 
     @classmethod
-    def update_folder(cls, db: Session, folder_id: int, user_id: int, request_data: NotesFolderUpdateSchema) -> NotesFolder | None:
+    def update_folder(
+        cls, db: Session, folder_id: int, user_id: int, update_data: NotesFolderUpdateSchema
+    ) -> NotesFolder | None:
         db_folder = cls.get_folder(db, folder_id, user_id)
         if not db_folder:
             return None
-        update_data = request_data.model_dump(exclude_unset=True)
+        update_data = update_data.model_dump(exclude_unset=True)
         
         # If parent_id is changed and index is not provided, move to the end of the new parent
-        if 'parent_id' in update_data and db_folder.parent_id != update_data['parent_id'] and 'index' not in update_data:
+        if (
+            'parent_id' in update_data
+                and db_folder.parent_id != update_data['parent_id']
+                and 'index' not in update_data
+        ):
             update_data['index'] = cls.get_new_folder_index(db, user_id, parent_id=update_data['parent_id'])
             
         for field, value in update_data.items():
@@ -69,24 +72,6 @@ class NotesFolderService(BaseService[NotesFolder]):
         return True
 
     @classmethod
-    def get_trash_folder(cls, db: Session, user_id: int) -> NotesFolder:
-        trash_folder = cls.get_base_query(db).filter(
-            NotesFolder.user_id == user_id,
-            NotesFolder.folder_type == NotesFolderType.TRASH
-        ).first()
-        if not trash_folder:
-            trash_folder = NotesFolder(
-                user_id=user_id,
-                name="Trash",
-                folder_type=NotesFolderType.TRASH,
-                index=1
-            )
-            db.add(trash_folder)
-            db.commit()
-            db.refresh(trash_folder)
-        return trash_folder
-
-    @classmethod
     def get_root_folder(cls, db: Session, user_id: int) -> NotesFolder:
         root_folder = cls.get_base_query(db).filter(
             NotesFolder.user_id == user_id,
@@ -103,6 +88,24 @@ class NotesFolderService(BaseService[NotesFolder]):
             db.commit()
             db.refresh(root_folder)
         return root_folder
+
+    @classmethod
+    def get_trash_folder(cls, db: Session, user_id: int) -> NotesFolder:
+        trash_folder = cls.get_base_query(db).filter(
+            NotesFolder.user_id == user_id,
+            NotesFolder.folder_type == NotesFolderType.TRASH
+        ).first()
+        if not trash_folder:
+            trash_folder = NotesFolder(
+                user_id=user_id,
+                name="Trash",
+                folder_type=NotesFolderType.TRASH,
+                index=1
+            )
+            db.add(trash_folder)
+            db.commit()
+            db.refresh(trash_folder)
+        return trash_folder
 
     @classmethod
     def get_folders(cls, db: Session, user_id: int) -> dict:

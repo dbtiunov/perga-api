@@ -1,4 +1,3 @@
-from datetime import datetime
 from pydantic import BaseModel
 
 from app.const.planner import PlannerAgendaType, PlannerItemState, PlannerAgendaAction
@@ -30,10 +29,6 @@ class PlannerAgendaSchema(BaseModel):
 
 
 # Agenda Item schemas
-class PlannerAgendaItemBaseSchemaSchema(BasePlannerItemBaseSchema):
-    agenda_id: int
-
-
 class PlannerAgendaItemCreateSchema(BaseModel):
     agenda_id: int
     text: str
@@ -45,17 +40,9 @@ class PlannerAgendaItemUpdateSchema(BaseModel):
     state: PlannerItemState | None = None
 
 
-class PlannerAgendaItemInDBBaseSchema(PlannerAgendaItemBaseSchemaSchema):
+class PlannerAgendaItemSchema(BasePlannerItemBaseSchema):
     id: int
-    created_dt: datetime
-    updated_dt: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class PlannerAgendaItemSchema(PlannerAgendaItemBaseSchemaSchema):
-    id: int
+    agenda_id: int
 
 
 class ReorderAgendaItemsSchema(BaseModel):

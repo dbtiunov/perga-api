@@ -22,19 +22,19 @@ class UserService(BaseService[User]):
         return cls.get_base_query(db).filter(User.id == user_id).first()
 
     @classmethod
-    def create_user(cls, db: Session, user_in: UserCreateSchema) -> User:
+    def create_user(cls, db: Session, create_data: UserCreateSchema) -> User:
         # Check if user with this email or username already exists
-        if cls.get_user_by_email(db, user_in.email):
+        if cls.get_user_by_email(db, create_data.email):
             raise ValueError("Email already registered")
 
-        if cls.get_user_by_username(db, user_in.username):
+        if cls.get_user_by_username(db, create_data.username):
             raise ValueError("Username already taken")
 
         # Create new user
-        hashed_password = get_password_hash(user_in.password)
+        hashed_password = get_password_hash(create_data.password)
         db_user = User(
-            username=user_in.username,
-            email=user_in.email,
+            username=create_data.username,
+            email=create_data.email,
             hashed_password=hashed_password,
             is_active=True
         )
@@ -45,12 +45,12 @@ class UserService(BaseService[User]):
         return db_user
 
     @classmethod
-    def update_user(cls, db: Session, user_id: int, user_in: UserUpdateSchema) -> User | None:
+    def update_user(cls, db: Session, user_id: int, update_data: UserUpdateSchema) -> User | None:
         db_user = cls.get_user_by_id(db, user_id)
         if not db_user:
             return None
 
-        update_data = user_in.model_dump(exclude_unset=True)
+        update_data = update_data.model_dump(exclude_unset=True)
         for field, new_value in update_data.items():
             setattr(db_user, field, new_value)
         db.commit()
