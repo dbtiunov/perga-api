@@ -39,11 +39,16 @@ def update_notes_folder(
     db: Session = Depends(get_db),
     current_user: UserSchema = Depends(AuthService.get_current_user)
 ):
-    folder = NotesFolderService.update_folder(
-        db, folder_id=folder_id, user_id=current_user.id, update_data=request_data
-    )
+    folder =  NotesFolderService.get_folder(db, user_id=current_user.id, folder_id=folder_id)
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
+
+    success = NotesFolderService.update_folder(
+        db, folder_id=folder_id, user_id=current_user.id, update_data=request_data
+    )
+    if not success:
+        raise HTTPException(status_code=400, detail="Cannot move folder to its subfolder or itself")
+
     return folder
 
 

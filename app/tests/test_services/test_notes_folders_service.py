@@ -1,8 +1,10 @@
+import pytest
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.const.notes import NotesFolderType
 from app.schemas.notes import NoteCreateSchema
-from app.schemas.notes_folders import NotesFolderCreateSchema
+from app.schemas.notes_folders import NotesFolderCreateSchema, NotesFolderUpdateSchema
 from app.services.notes_service import NoteService
 from app.services.notes_folders_service import NotesFolderService
 
@@ -59,7 +61,7 @@ class TestNotesFolderService:
         assert sf2.index == 1
 
     def test_get_folders_includes_trash_and_root(self, test_db: Session, test_user):
-        root_folder = NotesFolderService.get_trash_folder(test_db, user_id=test_user.id)
+        root_folder = NotesFolderService.get_root_folder(test_db, user_id=test_user.id)
         NotesFolderService.create_folder(
             test_db,
             user_id=test_user.id,
@@ -74,6 +76,7 @@ class TestNotesFolderService:
         assert data["root_folder"].folder_type == NotesFolderType.ROOT
         assert data["trash_folder"].folder_type == NotesFolderType.TRASH
         
+        test_db.refresh(data["root_folder"])
         assert len(data["root_folder"].subfolders) == 1
         assert data["root_folder"].subfolders[0].name == "Regular"
 
@@ -110,3 +113,54 @@ class TestNotesFolderService:
         test_db.refresh(note)
         assert folder.is_deleted
         assert note.is_deleted
+
+    def test_is_subfolder_of(self, test_db: Session, test_user):
+        # Create folder A
+        folder_a = NotesFolderService.create_folder(
+            test_db, 
+            user_id=test_user.id, 
+            create_data=NotesFolderCreateSchema(name="Folder A")
+        )
+        
+        # Create folder B as subfolder of A
+        folder_b = NotesFolderService.create_folder(
+            test_db, 
+            user_id=test_user.id, 
+            create_data=NotesFolderCreateSchema(name="Folder B", parent_id=folder_a.id)
+        )
+        
+        # Create folder C as subfolder of B
+        folder_c = NotesFolderService.create_folder(
+            test_db, 
+            user_id=test_user.id, 
+            create_data=NotesFolderCreateSchema(name="Folder C", parent_id=folder_b.id)
+        )
+        
+        assert NotesFolderService.is_subfolder_of(test_db, folder_a.id, folder_b.id, test_user.id) is True
+        assert NotesFolderService.is_subfolder_of(test_db, folder_a.id, folder_c.id, test_user.id) is True
+        assert NotesFolderService.is_subfolder_of(test_db, folder_b.id, folder_c.id, test_user.id) is True
+        
+        assert NotesFolderService.is_subfolder_of(test_db, folder_b.id, folder_a.id, test_user.id) is False
+        assert NotesFolderService.is_subfolder_of(test_db, folder_c.id, folder_a.id, test_user.id) is False
+
+    def test_prevent_move_to_subfolder(self, test_db: Session, test_user):
+        folder_a = NotesFolderService.create_folder(
+            test_db, 
+            user_id=test_user.id, 
+            create_data=NotesFolderCreateSchema(name="Folder A")
+        )
+        folder_b = NotesFolderService.create_folder(
+            test_db, 
+            user_id=test_user.id, 
+            create_data=NotesFolderCreateSchema(name="Folder B", parent_id=folder_a.id)
+        )
+        
+        with pytest.raises(HTTPException) as excinfo:
+            NotesFolderService.update_folder(
+                test_db, 
+                folder_id=folder_a.id, 
+                user_id=test_user.id, 
+                update_data=NotesFolderUpdateSchema(parent_id=folder_b.id)
+            )
+        assert excinfo.value.status_code == 400
+        assert "subfolder" in excinfo.value.detail.lower()

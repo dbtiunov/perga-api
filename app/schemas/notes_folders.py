@@ -4,7 +4,7 @@ from app.schemas.notes import NoteSchema
 
 
 class NotesFolderCreateSchema(BaseModel):
-    parent_id: int
+    parent_id: int | None = None
     name: str
 
 
@@ -15,8 +15,8 @@ class NotesFolderUpdateSchema(BaseModel):
 
 
 class NotesFolderSchema(BaseModel):
+    parent_id: int | None = None
     id: int
-    parent_id: int
     folder_type: str
     name: str
     index: int
@@ -25,7 +25,7 @@ class NotesFolderSchema(BaseModel):
         from_attributes = True
 
 
-class NotesFolderRespsonseSchema(BaseModel):
+class NotesFolderRespsonseSchema(NotesFolderSchema):
     notes: list[NoteSchema] = []
     subfolders: list['NotesFolderRespsonseSchema'] = []
 

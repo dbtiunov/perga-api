@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.const.notes import NotesFolderType
@@ -48,6 +49,14 @@ class NotesFolderService(BaseService[NotesFolder]):
             return None
         update_data = update_data.model_dump(exclude_unset=True)
         
+        if 'parent_id' in update_data and update_data['parent_id'] is not None:
+            new_parent_id = update_data['parent_id']
+            if (
+                new_parent_id == folder_id or
+                    cls.is_subfolder_of(db, folder_id, new_parent_id, user_id)
+            ):
+                return None
+
         # If parent_id is changed and index is not provided, move to the end of the new parent
         if (
             'parent_id' in update_data
@@ -147,3 +156,13 @@ class NotesFolderService(BaseService[NotesFolder]):
 
         mark_children_as_deleted(trash_folder)
         db.commit()
+
+    @classmethod
+    def is_subfolder_of(cls, db: Session, folder1_id: int, folder2_id: int, user_id: int) -> bool:
+        """ Check if folder2_id is a subfolder of folder1_id """
+        folder2 = cls.get_folder(db, folder2_id, user_id)
+        while folder2 and folder2.parent_id:
+            if folder2.parent_id == folder1_id:
+                return True
+            folder2 = folder2.parent
+        return False
