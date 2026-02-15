@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Index
 from sqlalchemy.orm import relationship
 
 from app.const.notes import NotesFolderType
@@ -24,6 +24,23 @@ class NotesFolder(BaseModel):
     notes = relationship('Note', back_populates='folder')
     parent = relationship('NotesFolder', remote_side='NotesFolder.id', back_populates='subfolders')
     subfolders = relationship('NotesFolder', back_populates='parent', cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index(
+            'idx_notes_folders_user_root',
+            'user_id',
+            unique=True,
+            postgresql_where=(folder_type == NotesFolderType.ROOT),
+            sqlite_where=(folder_type == NotesFolderType.ROOT)
+        ),
+        Index(
+            'idx_notes_folders_user_trash',
+            'user_id',
+            unique=True,
+            postgresql_where=(folder_type == NotesFolderType.TRASH),
+            sqlite_where=(folder_type == NotesFolderType.TRASH)
+        ),
+    )
 
     def __repr__(self):
         return f"<NotesFolder(id={self.id}, name={self.name!r}, user_id={self.user_id})>"

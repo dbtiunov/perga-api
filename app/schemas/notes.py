@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class NoteCreateSchema(BaseModel):
-    folder_id: int
+    folder_id: int | None = None
     title: str | None = None
     body: str | None = None
     index: int | None = None

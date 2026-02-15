@@ -1,4 +1,3 @@
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.const.notes import NotesFolderType
@@ -82,39 +81,29 @@ class NotesFolderService(BaseService[NotesFolder]):
 
     @classmethod
     def get_root_folder(cls, db: Session, user_id: int) -> NotesFolder:
-        root_folder = cls.get_base_query(db).filter(
-            NotesFolder.user_id == user_id,
-            NotesFolder.folder_type == NotesFolderType.ROOT
-        ).first()
-        if not root_folder:
-            root_folder = NotesFolder(
-                user_id=user_id,
-                name="Root",
-                folder_type=NotesFolderType.ROOT,
-                index=0
-            )
-            db.add(root_folder)
-            db.commit()
-            db.refresh(root_folder)
-        return root_folder
+        instance, _ = cls.get_or_create(
+            db,
+            user_id=user_id,
+            folder_type=NotesFolderType.ROOT,
+            defaults={
+                "name": "Root",
+                "index": 0
+            }
+        )
+        return instance
 
     @classmethod
     def get_trash_folder(cls, db: Session, user_id: int) -> NotesFolder:
-        trash_folder = cls.get_base_query(db).filter(
-            NotesFolder.user_id == user_id,
-            NotesFolder.folder_type == NotesFolderType.TRASH
-        ).first()
-        if not trash_folder:
-            trash_folder = NotesFolder(
-                user_id=user_id,
-                name="Trash",
-                folder_type=NotesFolderType.TRASH,
-                index=1
-            )
-            db.add(trash_folder)
-            db.commit()
-            db.refresh(trash_folder)
-        return trash_folder
+        instance, _ = cls.get_or_create(
+            db,
+            user_id=user_id,
+            folder_type=NotesFolderType.TRASH,
+            defaults={
+                "name": "Trash",
+                "index": 1
+            }
+        )
+        return instance
 
     @classmethod
     def get_folders(cls, db: Session, user_id: int) -> dict:

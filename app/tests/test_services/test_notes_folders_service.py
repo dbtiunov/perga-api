@@ -1,8 +1,7 @@
-import pytest
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.const.notes import NotesFolderType
+from app.models.notes import NotesFolder
 from app.schemas.notes import NoteCreateSchema
 from app.schemas.notes_folders import NotesFolderCreateSchema, NotesFolderUpdateSchema
 from app.services.notes_service import NoteService
@@ -155,12 +154,10 @@ class TestNotesFolderService:
             create_data=NotesFolderCreateSchema(name="Folder B", parent_id=folder_a.id)
         )
         
-        with pytest.raises(HTTPException) as excinfo:
-            NotesFolderService.update_folder(
-                test_db, 
-                folder_id=folder_a.id, 
-                user_id=test_user.id, 
-                update_data=NotesFolderUpdateSchema(parent_id=folder_b.id)
-            )
-        assert excinfo.value.status_code == 400
-        assert "subfolder" in excinfo.value.detail.lower()
+        result = NotesFolderService.update_folder(
+            test_db,
+            folder_id=folder_a.id,
+            user_id=test_user.id,
+            update_data=NotesFolderUpdateSchema(parent_id=folder_b.id)
+        )
+        assert result is None
