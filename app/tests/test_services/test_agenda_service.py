@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.const.planner import PlannerAgendaType, PLANNER_CUSTOM_AGENDA_INDEX_MIN
 from app.models.planner import PlannerAgenda
 from app.schemas.planner_agenda import PlannerAgendaCreateSchema, PlannerAgendaUpdateSchema
-from app.services.agenda_service import PlannerAgendaService
+from app.services.planner_agenda_service import PlannerAgendaService
 
 
 class TestPlannerAgendaService:

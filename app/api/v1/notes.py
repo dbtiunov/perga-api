@@ -43,15 +43,3 @@ def update_note(
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
     return note
-
-
-@router.post("/{note_id}/move-to-trash/", response_model=NoteSchema)
-def move_note_to_trash(
-    note_id: int,
-    db: Session = Depends(get_db),
-    current_user: UserSchema = Depends(AuthService.get_current_user)
-):
-    note = NoteService.move_to_trash(db, note_id=note_id, user_id=current_user.id)
-    if not note:
-        raise HTTPException(status_code=404, detail="Note not found")
-    return note

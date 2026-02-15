@@ -43,8 +43,8 @@ class TestBaseServiceFunctionality:
         email = "new@example.com"
         
         result, created = UserTestService.get_or_create(
-            test_db, 
-            username=username, 
+            test_db,
+            username=username,
             defaults={"email": email, "hashed_password": "hashed"}
         )
 

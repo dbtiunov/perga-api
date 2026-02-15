@@ -5,4 +5,3 @@ class NotesFolderType(str, Enum):
     REGULAR = "regular"
     ROOT = "root"
     TRASH = "trash"
-    ARCHIVE = "archive"

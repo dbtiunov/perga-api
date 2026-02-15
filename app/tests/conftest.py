@@ -1,7 +1,6 @@
 import json
 import os
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -10,8 +9,7 @@ from sqlalchemy.pool import StaticPool
 os.environ["SECRET_KEY"] = "test-secret-key"
 os.environ["CORS_ORIGINS"] = json.dumps(["http://localhost:5173", "http://localhost:3000"])
 
-from app.core.database import Base, get_db
-from app.main import app
+from app.core.database import Base
 
 
 # Use an in-memory SQLite database for testing

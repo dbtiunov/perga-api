@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 
 from app.const.notes import NotesFolderType
-from app.models.notes import NotesFolder
 from app.schemas.notes import NoteCreateSchema
 from app.schemas.notes_folders import NotesFolderCreateSchema, NotesFolderUpdateSchema
 from app.services.notes_service import NoteService
@@ -79,25 +78,12 @@ class TestNotesFolderService:
         assert len(data["root_folder"].subfolders) == 1
         assert data["root_folder"].subfolders[0].name == "Regular"
 
-    def test_move_to_trash_service(self, test_db: Session, test_user):
-        root_folder = NotesFolderService.get_trash_folder(test_db, user_id=test_user.id)
-        folder = NotesFolderService.create_folder(
-            test_db,
-            user_id=test_user.id,
-            create_data=NotesFolderCreateSchema(name="To Trash", parent_id=root_folder.id)
-        )
-        NotesFolderService.move_to_trash(test_db, folder_id=folder.id, user_id=test_user.id)
-        
-        test_db.refresh(folder)
-        trash_folder = NotesFolderService.get_trash_folder(test_db, user_id=test_user.id)
-        assert folder.parent_id == trash_folder.id
-
     def test_empty_trash(self, test_db: Session, test_user):
-        root_folder = NotesFolderService.get_trash_folder(test_db, user_id=test_user.id)
+        trash_folder = NotesFolderService.get_trash_folder(test_db, user_id=test_user.id)
         folder = NotesFolderService.create_folder(
             test_db,
             user_id=test_user.id,
-            create_data=NotesFolderCreateSchema(name="To Trash", parent_id=root_folder.id)
+            create_data=NotesFolderCreateSchema(name="To Trash", parent_id=trash_folder.id)
         )
         note = NoteService.create_note(
             test_db,
@@ -105,7 +91,6 @@ class TestNotesFolderService:
             create_data=NoteCreateSchema(title="Note", body="Body", folder_id=folder.id)
         )
         
-        NotesFolderService.move_to_trash(test_db, folder_id=folder.id, user_id=test_user.id)
         NotesFolderService.empty_trash(test_db, user_id=test_user.id)
         
         test_db.refresh(folder)
@@ -116,22 +101,22 @@ class TestNotesFolderService:
     def test_is_subfolder_of(self, test_db: Session, test_user):
         # Create folder A
         folder_a = NotesFolderService.create_folder(
-            test_db, 
-            user_id=test_user.id, 
+            test_db,
+            user_id=test_user.id,
             create_data=NotesFolderCreateSchema(name="Folder A")
         )
         
         # Create folder B as subfolder of A
         folder_b = NotesFolderService.create_folder(
-            test_db, 
-            user_id=test_user.id, 
+            test_db,
+            user_id=test_user.id,
             create_data=NotesFolderCreateSchema(name="Folder B", parent_id=folder_a.id)
         )
         
         # Create folder C as subfolder of B
         folder_c = NotesFolderService.create_folder(
-            test_db, 
-            user_id=test_user.id, 
+            test_db,
+            user_id=test_user.id,
             create_data=NotesFolderCreateSchema(name="Folder C", parent_id=folder_b.id)
         )
         
@@ -144,13 +129,13 @@ class TestNotesFolderService:
 
     def test_prevent_move_to_subfolder(self, test_db: Session, test_user):
         folder_a = NotesFolderService.create_folder(
-            test_db, 
-            user_id=test_user.id, 
+            test_db,
+            user_id=test_user.id,
             create_data=NotesFolderCreateSchema(name="Folder A")
         )
         folder_b = NotesFolderService.create_folder(
-            test_db, 
-            user_id=test_user.id, 
+            test_db,
+            user_id=test_user.id,
             create_data=NotesFolderCreateSchema(name="Folder B", parent_id=folder_a.id)
         )
         

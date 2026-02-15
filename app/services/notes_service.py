@@ -48,6 +48,7 @@ class NoteService(BaseService[Note]):
         for field, value in update_data.items():
             setattr(db_note, field, value)
         db.commit()
+
         db.refresh(db_note)
         return db_note
 
@@ -59,15 +60,3 @@ class NoteService(BaseService[Note]):
         db_note.mark_as_deleted()
         db.commit()
         return True
-
-    @classmethod
-    def move_to_trash(cls, db: Session, note_id: int, user_id: int) -> Note | None:
-        db_note = cls.get_note(db, note_id, user_id)
-        if not db_note:
-            return None
-
-        trash_folder = NotesFolderService.get_trash_folder(db, user_id)
-        db_note.folder_id = trash_folder.id
-        db.commit()
-        db.refresh(db_note)
-        return db_note

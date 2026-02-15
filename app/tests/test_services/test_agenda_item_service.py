@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.const.planner import PlannerItemState
 from app.models.planner import PlannerAgenda, PlannerAgendaItem
 from app.schemas.planner_agenda import PlannerAgendaItemCreateSchema, PlannerAgendaItemUpdateSchema
-from app.services.agenda_item_service import PlannerAgendaItemService
+from app.services.planner_agenda_item_service import PlannerAgendaItemService
 
 
 class TestPlannerAgendaItemService:

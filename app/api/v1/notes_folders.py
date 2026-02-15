@@ -52,18 +52,6 @@ def update_notes_folder(
     return folder
 
 
-@router.post("/{folder_id}/move-to-trash/", response_model=NotesFolderSchema)
-def move_folder_to_trash(
-    folder_id: int,
-    db: Session = Depends(get_db),
-    current_user: UserSchema = Depends(AuthService.get_current_user)
-):
-    folder = NotesFolderService.move_to_trash(db, folder_id=folder_id, user_id=current_user.id)
-    if not folder:
-        raise HTTPException(status_code=404, detail="Folder not found")
-    return folder
-
-
 @router.post("/empty-trash/")
 def empty_trash(
     db: Session = Depends(get_db),

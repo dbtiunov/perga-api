@@ -115,18 +115,6 @@ class NotesFolderService(BaseService[NotesFolder]):
         }
 
     @classmethod
-    def move_to_trash(cls, db: Session, folder_id: int, user_id: int) -> NotesFolder | None:
-        db_folder = cls.get_folder(db, folder_id, user_id)
-        if not db_folder:
-            return None
-        
-        trash_folder = cls.get_trash_folder(db, user_id)
-        db_folder.parent_id = trash_folder.id
-        db.commit()
-        db.refresh(db_folder)
-        return db_folder
-
-    @classmethod
     def empty_trash(cls, db: Session, user_id: int) -> None:
         trash_folder = cls.get_trash_folder(db, user_id)
         

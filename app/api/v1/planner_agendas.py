@@ -12,8 +12,8 @@ from app.schemas.planner_agenda import (
     CopyAgendaItemSchema, MoveAgendaItemSchema,
     PlannerAgendaActionSchema,
 )
-from app.services.agenda_service import PlannerAgendaService
-from app.services.agenda_item_service import PlannerAgendaItemService
+from app.services.planner_agenda_service import PlannerAgendaService
+from app.services.planner_agenda_item_service import PlannerAgendaItemService
 from app.schemas.user import UserSchema
 
 router = APIRouter()
