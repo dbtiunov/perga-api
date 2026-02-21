@@ -1,6 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
-from app.schemas.notes import NoteSchema
+from app.schemas.notes import NoteMetaSchema
 
 
 class NotesFolderCreateSchema(BaseModel):
@@ -26,8 +26,14 @@ class NotesFolderSchema(BaseModel):
 
 
 class NotesFolderRespsonseSchema(NotesFolderSchema):
-    notes: list[NoteSchema] = []
+    notes: list[NoteMetaSchema] = []
     subfolders: list['NotesFolderRespsonseSchema'] = []
+
+    @field_validator('notes', mode='after')
+    @classmethod
+    def sort_notes(cls, v: list[NoteMetaSchema]) -> list[NoteMetaSchema]:
+        # Sort notes by updated_dt desc.
+        return sorted(v, key=lambda x: x.updated_dt, reverse=True)
 
     class Config:
         from_attributes = True

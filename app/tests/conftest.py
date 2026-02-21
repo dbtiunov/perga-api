@@ -1,6 +1,7 @@
 import json
 import os
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -9,7 +10,9 @@ from sqlalchemy.pool import StaticPool
 os.environ["SECRET_KEY"] = "test-secret-key"
 os.environ["CORS_ORIGINS"] = json.dumps(["http://localhost:5173", "http://localhost:3000"])
 
-from app.core.database import Base
+from app.core.database import Base, get_db
+from app.main import app
+from app.services.auth_utils import create_access_token
 
 
 # Use an in-memory SQLite database for testing
@@ -51,3 +54,23 @@ def test_db(test_db_factory):
         yield db
     finally:
         db.close()
+
+
+@pytest.fixture(scope="function")
+def client(test_db):
+    def override_get_db():
+        try:
+            yield test_db
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture(scope="function")
+def auth_headers(test_user):
+    access_token = create_access_token(data={"sub": str(test_user.id)})
+    return {"Authorization": f"Bearer {access_token}"}
