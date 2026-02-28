@@ -14,21 +14,12 @@ class NotesFolderService(BaseService[NotesFolder]):
         return cls.get_base_query(db).filter(NotesFolder.user_id == user_id, NotesFolder.id == folder_id).first()
 
     @classmethod
-    def get_new_folder_index(cls, db: Session, user_id: int, parent_id: int | None = None) -> int:
-        query = cls.get_base_query(db).filter(NotesFolder.user_id == user_id, NotesFolder.parent_id == parent_id)
-        max_index_folder = query.order_by(NotesFolder.index.desc()).first()
-        return (max_index_folder.index + 1) if max_index_folder else 0
-
-    @classmethod
     def create_folder(cls, db: Session, user_id: int, create_data: NotesFolderCreateSchema) -> NotesFolder:
         data = create_data.model_dump()
         if data.get('parent_id') is None:
             root_folder = cls.get_root_folder(db, user_id)
             data['parent_id'] = root_folder.id
             
-        if data.get('index') is None:
-            data['index'] = cls.get_new_folder_index(db, user_id, parent_id=data.get('parent_id'))
-
         db_folder = NotesFolder(
             user_id=user_id,
             folder_type=NotesFolderType.REGULAR,
@@ -56,14 +47,6 @@ class NotesFolderService(BaseService[NotesFolder]):
             ):
                 return None
 
-        # If parent_id is changed and index is not provided, move to the end of the new parent
-        if (
-            'parent_id' in update_data
-                and db_folder.parent_id != update_data['parent_id']
-                and 'index' not in update_data
-        ):
-            update_data['index'] = cls.get_new_folder_index(db, user_id, parent_id=update_data['parent_id'])
-            
         for field, value in update_data.items():
             setattr(db_folder, field, value)
         db.commit()
@@ -85,10 +68,7 @@ class NotesFolderService(BaseService[NotesFolder]):
             db,
             user_id=user_id,
             folder_type=NotesFolderType.ROOT,
-            defaults={
-                "name": "Root",
-                "index": 0
-            }
+            defaults={"name": "Root"}
         )
         return instance
 
@@ -98,10 +78,7 @@ class NotesFolderService(BaseService[NotesFolder]):
             db,
             user_id=user_id,
             folder_type=NotesFolderType.TRASH,
-            defaults={
-                "name": "Trash",
-                "index": 1
-            }
+            defaults={"name": "Trash"}
         )
         return instance
 

@@ -10,8 +10,7 @@ class NotesFolderCreateSchema(BaseModel):
 
 class NotesFolderUpdateSchema(BaseModel):
     parent_id: int | None = None
-    name: str | None = None
-    index: int | None = None
+    name: str = None
 
 
 class NotesFolderSchema(BaseModel):
@@ -19,7 +18,6 @@ class NotesFolderSchema(BaseModel):
     id: int
     folder_type: str
     name: str
-    index: int
 
     class Config:
         from_attributes = True

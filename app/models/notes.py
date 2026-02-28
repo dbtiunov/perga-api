@@ -15,9 +15,8 @@ class NotesFolder(BaseModel):
 
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
     parent_id = Column(Integer, ForeignKey('notes_folders.id'), nullable=True, index=True)
-    name = Column(String(length=256), nullable=False)
-    index = Column(Integer, nullable=False, default=0)
     folder_type = Column(String(length=256), nullable=False, default=NotesFolderType.REGULAR)
+    name = Column(String(length=256), nullable=False)
 
     # Relationships
     user = relationship('User', back_populates='notes_folders')
@@ -49,11 +48,10 @@ class NotesFolder(BaseModel):
 class Note(BaseModel):
     __tablename__ = 'notes'
 
-    title = Column(String(length=256), nullable=True)
-    body = Column(Text, nullable=False, default='')
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
-    index = Column(Integer, nullable=False, default=0)
-    folder_id = Column(Integer, ForeignKey('notes_folders.id'), nullable=True, index=True)
+    folder_id = Column(Integer, ForeignKey('notes_folders.id'), nullable=False, index=True)
+    title = Column(String(length=256), nullable=False, default='')
+    body = Column(Text, nullable=False, default='')
 
     # Relationships
     user = relationship('User', back_populates='notes')
