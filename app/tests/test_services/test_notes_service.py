@@ -7,7 +7,8 @@ from app.services.notes_service import NoteService
 
 class TestNoteService:
     def test_create_and_get_note(self, test_db: Session, test_user):
-        create = NoteCreateSchema(title="My Note", body="Hello world")
+        root_folder = NotesFolderService.get_root_folder(test_db, user_id=test_user.id)
+        create = NoteCreateSchema(title="My Note", body="Hello world", folder_id=root_folder.id)
         note = NoteService.create_note(test_db, user_id=test_user.id, create_data=create)
 
         assert note.id is not None
@@ -24,7 +25,7 @@ class TestNoteService:
         note = NoteService.create_note(
             test_db,
             user_id=test_user.id,
-            create_data=NoteCreateSchema(title=None, body="old", folder_id=root_folder.id)
+            create_data=NoteCreateSchema(title='', body="old", folder_id=root_folder.id)
         )
         updated = NoteService.update_note(
             test_db,
@@ -37,7 +38,12 @@ class TestNoteService:
         assert updated.body == "new"
 
     def test_mark_note_as_deleted(self, test_db: Session, test_user):
-        note = NoteService.create_note(test_db, user_id=test_user.id, create_data=NoteCreateSchema(body="to delete"))
+        root_folder = NotesFolderService.get_root_folder(test_db, user_id=test_user.id)
+        note = NoteService.create_note(
+            test_db,
+            user_id=test_user.id,
+            create_data=NoteCreateSchema(body="to delete",folder_id=root_folder.id)
+        )
         ok = NoteService.delete_note(test_db, note_id=note.id, user_id=test_user.id)
         assert ok is True
 

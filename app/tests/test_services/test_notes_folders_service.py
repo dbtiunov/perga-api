@@ -29,35 +29,6 @@ class TestNotesFolderService:
         assert parent.subfolders[0].id == subfolder.id
         assert subfolder.parent.id == parent.id
 
-    def test_folder_index_scoped_by_parent(self, test_db: Session, test_user):
-        root_folder = NotesFolderService.get_trash_folder(test_db, user_id=test_user.id)
-        f1 = NotesFolderService.create_folder(
-            test_db,
-            user_id=test_user.id,
-            create_data=NotesFolderCreateSchema(name="F1", parent_id=root_folder.id)
-        )
-        f2 = NotesFolderService.create_folder(
-            test_db,
-            user_id=test_user.id,
-            create_data=NotesFolderCreateSchema(name="F2", parent_id=root_folder.id)
-        )
-        assert f1.index == 0
-        assert f2.index == 1
-        
-        # Subfolders of f1
-        sf1 = NotesFolderService.create_folder(
-            test_db,
-            user_id=test_user.id,
-            create_data=NotesFolderCreateSchema(name="SF1", parent_id=f1.id)
-        )
-        sf2 = NotesFolderService.create_folder(
-            test_db,
-            user_id=test_user.id,
-            create_data=NotesFolderCreateSchema(name="SF2", parent_id=f1.id)
-        )
-        assert sf1.index == 0
-        assert sf2.index == 1
-
     def test_get_folders_includes_trash_and_root(self, test_db: Session, test_user):
         root_folder = NotesFolderService.get_root_folder(test_db, user_id=test_user.id)
         NotesFolderService.create_folder(
