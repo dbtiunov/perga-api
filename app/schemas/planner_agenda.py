@@ -1,23 +1,22 @@
-from datetime import datetime
 from pydantic import BaseModel
 
-from app.const import PlannerAgendaType, PlannerItemState, PlannerAgendaAction
-from app.schemas.planner_day import BasePlannerItemBase
+from app.const.planner import PlannerAgendaType, PlannerItemState, PlannerAgendaAction
+from app.schemas.planner_day import BasePlannerItemBaseSchema
 
 
-class PlannerAgendaCreate(BaseModel):
+class PlannerAgendaCreateSchema(BaseModel):
     agenda_type: PlannerAgendaType
     name: str
     index: int | None = None
 
 
-class PlannerAgendaUpdate(BaseModel):
+class PlannerAgendaUpdateSchema(BaseModel):
     name: str | None = None
     index: int | None = None
     agenda_type: PlannerAgendaType | None = None
 
 
-class PlannerAgenda(BaseModel):
+class PlannerAgendaSchema(BaseModel):
     id: int
     agenda_type: str
     name: str
@@ -30,49 +29,37 @@ class PlannerAgenda(BaseModel):
 
 
 # Agenda Item schemas
-class PlannerAgendaItemBase(BasePlannerItemBase):
-    agenda_id: int
-
-
-class PlannerAgendaItemCreate(BaseModel):
+class PlannerAgendaItemCreateSchema(BaseModel):
     agenda_id: int
     text: str
 
 
-class PlannerAgendaItemUpdate(BaseModel):
+class PlannerAgendaItemUpdateSchema(BaseModel):
     agenda_id: int | None = None
     text: str | None = None
     state: PlannerItemState | None = None
 
 
-class PlannerAgendaItemInDBBase(PlannerAgendaItemBase):
+class PlannerAgendaItemSchema(BasePlannerItemBaseSchema):
     id: int
-    created_dt: datetime
-    updated_dt: datetime
-
-    class Config:
-        from_attributes = True
+    agenda_id: int
 
 
-class PlannerAgendaItem(PlannerAgendaItemBase):
-    id: int
-
-
-class ReorderAgendaItemsRequest(BaseModel):
+class ReorderAgendaItemsSchema(BaseModel):
     ordered_item_ids: list[int]
 
 
-class ReorderAgendasRequest(BaseModel):
+class ReorderAgendasSchema(BaseModel):
     ordered_agenda_ids: list[int]
 
 
-class CopyAgendaItemRequest(BaseModel):
+class CopyAgendaItemSchema(BaseModel):
     agenda_id: int
 
 
-class MoveAgendaItemRequest(BaseModel):
+class MoveAgendaItemSchema(BaseModel):
     agenda_id: int
 
 
-class PlannerAgendaActionRequest(BaseModel):
+class PlannerAgendaActionSchema(BaseModel):
     action: PlannerAgendaAction

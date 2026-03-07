@@ -2,10 +2,10 @@ import logging
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
-from app.const import PlannerItemState
+from app.const.planner import PlannerItemState
 from app.core.db_utils import atomic_transaction, TransactionRollback
 from app.models.planner import PlannerAgendaItem
-from app.schemas.planner_agenda import PlannerAgendaItemCreate, PlannerAgendaItemUpdate
+from app.schemas.planner_agenda import PlannerAgendaItemCreateSchema, PlannerAgendaItemUpdateSchema
 from app.services.base_service import BaseService
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
         return query.order_by(PlannerAgendaItem.index).all()
 
     @classmethod
-    def create_agenda_item(cls, db: Session, item: PlannerAgendaItemCreate, user_id: int) -> PlannerAgendaItem:
+    def create_agenda_item(cls, db: Session, item: PlannerAgendaItemCreateSchema, user_id: int) -> PlannerAgendaItem:
         new_index = cls.get_new_agenda_item_index(db, item.agenda_id, user_id)
 
         db_item = PlannerAgendaItem(**item.model_dump(), index=new_index, user_id=user_id)
@@ -52,7 +52,7 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
 
     @classmethod
     def update_agenda_item(
-        cls, db: Session, item_id: int, item: PlannerAgendaItemUpdate, user_id: int
+        cls, db: Session, item_id: int, item: PlannerAgendaItemUpdateSchema, user_id: int
     ) -> PlannerAgendaItem | None:
         db_item = cls.get_agenda_item(db, item_id, user_id)
         if not db_item:

@@ -1,45 +1,45 @@
 from datetime import date
 from pydantic import BaseModel
 
-from app.const import PlannerItemState
+from app.const.planner import PlannerItemState
 
 
 # Base schemas for planner items
-class BasePlannerItemBase(BaseModel):
+class BasePlannerItemBaseSchema(BaseModel):
     text: str
     index: int
     state: PlannerItemState
 
 
-class PlannerDayItemBase(BasePlannerItemBase):
+class PlannerDayItemBaseSchema(BasePlannerItemBaseSchema):
     day: date
 
 
-class PlannerDayItemCreate(BaseModel):
+class PlannerDayItemCreateSchema(BaseModel):
     day: date
     text: str
 
 
-class PlannerDayItemUpdate(BaseModel):
+class PlannerDayItemUpdateSchema(BaseModel):
     day: date | None = None
     text: str | None = None
     state: PlannerItemState | None = None
 
 
-class PlannerDayItem(BaseModel):
+class PlannerDayItemSchema(BaseModel):
     id: int
     day: date
     text: str
     state: PlannerItemState
 
 
-class ReorderDayItemsRequest(BaseModel):
+class ReorderDayItemsSchema(BaseModel):
     ordered_item_ids: list[int]
 
 
-class CopyDayItemRequest(BaseModel):
+class CopyDayItemSchema(BaseModel):
     day: date
 
 
-class SnoozeDayItemRequest(BaseModel):
+class SnoozeDayItemSchema(BaseModel):
     day: date

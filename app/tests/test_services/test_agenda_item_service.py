@@ -1,10 +1,10 @@
 import pytest
 from sqlalchemy.orm import Session
 
-from app.const import PlannerItemState
+from app.const.planner import PlannerItemState
 from app.models.planner import PlannerAgenda, PlannerAgendaItem
-from app.schemas.planner_agenda import PlannerAgendaItemCreate, PlannerAgendaItemUpdate
-from app.services.agenda_item_service import PlannerAgendaItemService
+from app.schemas.planner_agenda import PlannerAgendaItemCreateSchema, PlannerAgendaItemUpdateSchema
+from app.services.planner_agenda_item_service import PlannerAgendaItemService
 
 
 class TestPlannerAgendaItemService:
@@ -129,7 +129,7 @@ class TestPlannerAgendaItemService:
     def test_create_agenda_item(self, test_db: Session, test_user, test_agenda):
         """Test that create_agenda_item creates an item correctly"""
         # Create an item
-        item_create = PlannerAgendaItemCreate(
+        item_create = PlannerAgendaItemCreateSchema(
             text="Test Item",
             agenda_id=test_agenda.id
         )
@@ -158,7 +158,7 @@ class TestPlannerAgendaItemService:
         test_db.refresh(item)
         
         # Update the item
-        item_update = PlannerAgendaItemUpdate(
+        item_update = PlannerAgendaItemUpdateSchema(
             text="Updated Item",
             state=PlannerItemState.COMPLETED
         )

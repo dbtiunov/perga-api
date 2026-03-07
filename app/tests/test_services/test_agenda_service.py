@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
 
-from app.const import PlannerAgendaType, PLANNER_CUSTOM_AGENDA_INDEX_MIN
+from app.const.planner import PlannerAgendaType, PLANNER_CUSTOM_AGENDA_INDEX_MIN
 from app.models.planner import PlannerAgenda
-from app.schemas.planner_agenda import PlannerAgendaCreate, PlannerAgendaUpdate
-from app.services.agenda_service import PlannerAgendaService
+from app.schemas.planner_agenda import PlannerAgendaCreateSchema, PlannerAgendaUpdateSchema
+from app.services.planner_agenda_service import PlannerAgendaService
 
 
 class TestPlannerAgendaService:
@@ -23,7 +23,7 @@ class TestPlannerAgendaService:
         test_db.refresh(agenda)
 
         # Archive it (CUSTOM -> ARCHIVED)
-        update = PlannerAgendaUpdate(agenda_type=PlannerAgendaType.ARCHIVED)
+        update = PlannerAgendaUpdateSchema(agenda_type=PlannerAgendaType.ARCHIVED)
         archived = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, update, test_user.id)
         assert archived is not None
         assert archived.agenda_type == PlannerAgendaType.ARCHIVED
@@ -32,7 +32,7 @@ class TestPlannerAgendaService:
         assert archived.index == PLANNER_CUSTOM_AGENDA_INDEX_MIN
 
         # Unarchive it back (ARCHIVED -> CUSTOM)
-        update_back = PlannerAgendaUpdate(agenda_type=PlannerAgendaType.CUSTOM)
+        update_back = PlannerAgendaUpdateSchema(agenda_type=PlannerAgendaType.CUSTOM)
         unarchived = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, update_back, test_user.id)
         assert unarchived is not None
         assert unarchived.agenda_type == PlannerAgendaType.CUSTOM
@@ -91,7 +91,7 @@ class TestPlannerAgendaService:
     def test_create_planner_agenda(self, test_db: Session, test_user):
         """Test that create_planner_agenda creates an agenda correctly"""
         # Create an agenda
-        agenda_create = PlannerAgendaCreate(
+        agenda_create = PlannerAgendaCreateSchema(
             name="Test Agenda",
             agenda_type=PlannerAgendaType.CUSTOM,
             index=None  # Should be set automatically
@@ -119,7 +119,7 @@ class TestPlannerAgendaService:
         test_db.refresh(agenda)
         
         # Update the agenda
-        agenda_update = PlannerAgendaUpdate(
+        agenda_update = PlannerAgendaUpdateSchema(
             name="Updated Agenda"
         )
         db_agenda = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, agenda_update, test_user.id)

@@ -1,14 +1,15 @@
 import logging
 from datetime import datetime, date, timezone
-
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import func, case
 from sqlalchemy.orm import Session
 
-from app.const import PlannerAgendaType, PlannerItemState, PLANNER_CUSTOM_AGENDA_INDEX_MIN, PLANNER_MONTHLY_AGENDA_INDEX
+from app.const.planner import (
+    PlannerAgendaType, PlannerItemState, PLANNER_CUSTOM_AGENDA_INDEX_MIN, PLANNER_MONTHLY_AGENDA_INDEX
+)
 from app.core.db_utils import atomic_transaction, TransactionRollback
 from app.models.planner import PlannerAgenda, PlannerAgendaItem
-from app.schemas.planner_agenda import PlannerAgendaCreate, PlannerAgendaUpdate
+from app.schemas.planner_agenda import PlannerAgendaCreateSchema, PlannerAgendaUpdateSchema
 from app.services.base_service import BaseService
 
 logger = logging.getLogger(__name__)
@@ -48,7 +49,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
                 try:
                     month_agenda = [agenda for agenda in month_agendas if agenda.name == month_name][0]
                 except IndexError:
-                    agenda_create = PlannerAgendaCreate(
+                    agenda_create = PlannerAgendaCreateSchema(
                         name=month_name,
                         agenda_type=PlannerAgendaType.MONTHLY,
                         index=PLANNER_MONTHLY_AGENDA_INDEX
@@ -108,7 +109,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
         return query.first()
 
     @classmethod
-    def create_planner_agenda(cls, db: Session, agenda_item: PlannerAgendaCreate, user_id: int) -> PlannerAgenda:
+    def create_planner_agenda(cls, db: Session, agenda_item: PlannerAgendaCreateSchema, user_id: int) -> PlannerAgenda:
         if agenda_item.index is None:
             agenda_item.index = cls.get_new_agenda_index(db, user_id)
 
@@ -121,7 +122,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
 
     @classmethod
     def update_planner_agenda(
-        cls, db: Session, agenda_id: int, agenda_item: PlannerAgendaUpdate, user_id: int
+        cls, db: Session, agenda_id: int, agenda_item: PlannerAgendaUpdateSchema, user_id: int
     ) -> PlannerAgenda | None:
         db_agenda = cls.get_planner_agenda(db, agenda_id, user_id)
         if not db_agenda:

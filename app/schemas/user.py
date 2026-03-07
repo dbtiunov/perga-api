@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
-from app.const import WeekStartDay
+from app.const.planner import WeekStartDay
 
 
-class User(BaseModel):
+class UserSchema(BaseModel):
     username: str
     email: str
     week_start_day: WeekStartDay
@@ -12,19 +12,19 @@ class User(BaseModel):
         from_attributes = True
 
 
-class UserCreate(BaseModel):
+class UserCreateSchema(BaseModel):
     username: str
     email: str
     password: str
     week_start_day: WeekStartDay = WeekStartDay.SUNDAY
 
 
-class UserUpdate(BaseModel):
+class UserUpdateSchema(BaseModel):
     username: str | None = None
     email: str | None = None
     week_start_day: WeekStartDay | None = None
 
 
-class PasswordChangeRequest(BaseModel):
+class PasswordChangeSchema(BaseModel):
     current_password: str
     new_password: str

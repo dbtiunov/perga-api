@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.orm import Session
 
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import UserCreateSchema, UserUpdateSchema
 from app.services.auth_utils import verify_password
 from app.services.user_service import UserService
 
@@ -53,7 +53,7 @@ class TestUserService:
     def test_create_user(self, test_db: Session):
         """Test that create_user creates a user correctly"""
         # Create a user
-        user_create = UserCreate(
+        user_create = UserCreateSchema(
             username="newuser",
             email="newuser@example.com",
             password="password123"
@@ -70,7 +70,7 @@ class TestUserService:
     def test_create_user_duplicate_email(self, test_db: Session, test_user):
         """Test that create_user raises an error when email is already registered"""
         # Try to create a user with the same email
-        user_create = UserCreate(
+        user_create = UserCreateSchema(
             username="newuser",
             email=test_user.email,
             password="password123"
@@ -85,7 +85,7 @@ class TestUserService:
     def test_create_user_duplicate_username(self, test_db: Session):
         """Test that create_user raises an error when username is already taken"""
         # Create a user
-        user_create1 = UserCreate(
+        user_create1 = UserCreateSchema(
             username="sameusername",
             email="user1@example.com",
             password="password123"
@@ -93,7 +93,7 @@ class TestUserService:
         UserService.create_user(test_db, user_create1)
         
         # Try to create another user with the same username
-        user_create2 = UserCreate(
+        user_create2 = UserCreateSchema(
             username="sameusername",
             email="user2@example.com",
             password="password123"
@@ -108,7 +108,7 @@ class TestUserService:
     def test_update_user(self, test_db: Session, test_user):
         """Test that update_user updates a user correctly"""
         # Update the user
-        user_update = UserUpdate(
+        user_update = UserUpdateSchema(
             email="updated@example.com"
         )
         db_user = UserService.update_user(test_db, test_user.id, user_update)

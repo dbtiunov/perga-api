@@ -1,25 +1,21 @@
 from pydantic import BaseModel
 
 
-class Token(BaseModel):
-    """Schema for token response."""
+class TokenSchema(BaseModel):
     access_token: str
     token_type: str
     refresh_token: str | None = None
 
 
-class TokenPayload(BaseModel):
-    """Schema for token payload."""
+class TokenPayloadSchema(BaseModel):
     sub: int | None = None
     exp: int | None = None
 
 
-class SigninRequest(BaseModel):
-    """Schema for signin request."""
+class SigninSchema(BaseModel):
     username: str
     password: str
 
 
-class RefreshTokenRequest(BaseModel):
-    """Schema for refresh token request."""
+class RefreshTokenSchema(BaseModel):
     refresh_token: str

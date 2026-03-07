@@ -1,40 +1,53 @@
 from sqlalchemy.orm import Session
 
-from app.models.base import BaseModel
+from app.models.user import User
 from app.services.base_service import BaseService
 
 
-class TestModel(BaseModel):
-    """A simple model for testing BaseService"""
-    __tablename__ = "test_models"
-
-
-class TestBaseService(BaseService[TestModel]):
-    """A service class for testing BaseService"""
-    model = TestModel
+class UserTestService(BaseService[User]):
+    """A service class for testing BaseService with User model"""
+    model = User
 
 
 class TestBaseServiceFunctionality:
-    """Tests for the BaseService class"""
-
     def test_get_base_query(self, test_db: Session):
-        """Test that get_base_query returns a query filtered by is_deleted=False"""
-        # Create a test model instance
-        test_model = TestModel()
-        test_db.add(test_model)
+        user = User(username="testuser", email="test@example.com", hashed_password="hashed")
+        test_db.add(user)
         test_db.commit()
         
-        # Create a deleted test model instance
-        deleted_model = TestModel()
-        deleted_model.mark_as_deleted()
-        test_db.add(deleted_model)
+        deleted_user = User(username="deleteduser", email="deleted@example.com", hashed_password="hashed")
+        deleted_user.mark_as_deleted()
+        test_db.add(deleted_user)
         test_db.commit()
+
+        non_deleted_users = UserTestService.get_base_query(test_db)
+        non_deleted_users_ids = [r.id for r in non_deleted_users]
+        assert user.id in non_deleted_users_ids
+        assert deleted_user.id not in non_deleted_users_ids
+
+    def test_get_or_create_existing(self, test_db: Session):
+        username = "existing_user"
+        email = "existing@example.com"
+        user = User(username=username, email=email, hashed_password="hashed")
+        test_db.add(user)
+        test_db.commit()
+
+        result, created = UserTestService.get_or_create(test_db, username=username)
+
+        assert not created
+        assert result.id == user.id
+        assert result.email == email
+
+    def test_get_or_create_new(self, test_db: Session):
+        username = "new_user"
+        email = "new@example.com"
         
-        # Get the base query
-        query = TestBaseService.get_base_query(test_db)
-        
-        # Check that only non-deleted models are returned
-        results = query.all()
-        assert len(results) == 1
-        assert results[0].id == test_model.id
-        assert not results[0].is_deleted
+        result, created = UserTestService.get_or_create(
+            test_db,
+            username=username,
+            defaults={"email": email, "hashed_password": "hashed"}
+        )
+
+        assert created
+        assert result.username == username
+        assert result.email == email

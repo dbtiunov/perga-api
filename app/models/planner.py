@@ -1,9 +1,8 @@
 from sqlalchemy import Column, String, Integer, Date, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 
-from app.const import PlannerAgendaType, PlannerItemState
+from app.const.planner import PlannerAgendaType, PlannerItemState
 from app.models.base import BaseModel
-
 
 
 __all__ = (
