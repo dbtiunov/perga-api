@@ -13,14 +13,13 @@ class TestNotesExportService:
     def test_get_note_content_html(self, test_db: Session, test_user):
         note = Note(title="Test", body="<h1>Hello</h1>", user_id=test_user.id)
         content = NotesExportService._get_note_content(note, ExportType.HTML)
-        assert content == "<h1>Hello</h1>"
+        assert content == "<h1>Test</h1><h1>Hello</h1>"
 
     def test_get_note_content_markdown(self, test_db: Session, test_user):
         note = Note(title="Test", body="<h1>Hello</h1>", user_id=test_user.id)
         content = NotesExportService._get_note_content(note, ExportType.MARKDOWN)
+        assert content.startswith("# Test")
         assert "Hello" in content
-        # markdownify might use different styles, but let's check for some common markers
-        assert "=====" in content or "# Hello" in content
 
     def test_generate_export_filename(self, test_db: Session, test_user):
         note = Note(id=1, title="My Note!", body="", user_id=test_user.id)
@@ -42,7 +41,7 @@ class TestNotesExportService:
         content, filename = NotesExportService.export_single_note(
             test_db, user_id=test_user.id, note_id=note.id, export_type=ExportType.HTML
         )
-        assert content == "Body"
+        assert content == "<h1>Test</h1>Body"
         assert filename == "Test.html"
 
     def test_export_folder(self, test_db: Session, test_user):

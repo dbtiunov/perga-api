@@ -3,9 +3,8 @@ import zipfile
 from markdownify import markdownify
 from sqlalchemy.orm import Session
 
-from app.const.notes import EXPORT_TYPE_EXTENSION_MAP
+from app.const.notes import ExportType, EXPORT_TYPE_EXTENSION_MAP
 from app.models.notes import Note, NotesFolder
-from app.schemas.notes_export import ExportType
 from app.services.notes_service import NoteService
 from app.services.notes_folders_service import NotesFolderService
 
@@ -14,9 +13,12 @@ class NotesExportService:
     @classmethod
     def _get_note_content(cls, note: Note, export_type: ExportType) -> str:
         """ Notes body stored as HTML. Convert it to a specified format if needed. """
-        note_content = note.body
         if export_type == ExportType.MARKDOWN:
-            note_content = markdownify(note.body)
+            title = f"# {note.title}\n\n"
+            note_content = title + markdownify(note.body)
+        else:
+            title = f"<h1>{note.title}</h1>"
+            note_content = title + note.body
         return note_content
 
     @classmethod

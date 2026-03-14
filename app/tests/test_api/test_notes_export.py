@@ -35,7 +35,7 @@ class TestNotesExportAPI:
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
         assert "attachment; filename=Test Note.html" in response.headers["content-disposition"]
-        assert response.text == "<h1>Hello</h1><p>World</p>"
+        assert response.text == "<h1>Test Note</h1><h1>Hello</h1><p>World</p>"
 
     def test_export_single_note_markdown(self, client: TestClient, test_db: Session, test_user, auth_headers):
         root_folder = NotesFolderService.get_root_folder(test_db, user_id=test_user.id)
@@ -105,7 +105,7 @@ class TestNotesExportAPI:
             filenames = zf.namelist()
             assert "Note 1.md" in filenames
             assert "Note 2.md" in filenames
-            assert zf.read("Note 1.md").decode().strip() == "Body 1"
+            assert zf.read("Note 1.md").decode().strip() == "# Note 1\n\nBody 1"
 
     def test_export_all_notes_zip(self, client: TestClient, test_db: Session, test_user, auth_headers):
         root_folder = NotesFolderService.get_root_folder(test_db, user_id=test_user.id)
