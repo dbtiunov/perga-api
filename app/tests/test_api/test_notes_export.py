@@ -22,11 +22,11 @@ class TestNotesExportAPI:
             )
         )
         
-        response = client.post(
+        response = client.get(
             "/api/v1/notes/export/",
-            json={
-                "export_type": ExportType.HTML,
-                "export_target": ExportTarget.SINGLE_NOTE,
+            params={
+                "export_type": ExportType.HTML.value,
+                "export_target": ExportTarget.SINGLE_NOTE.value,
                 "export_target_id": note.id
             },
             headers=auth_headers
@@ -49,11 +49,11 @@ class TestNotesExportAPI:
             )
         )
         
-        response = client.post(
+        response = client.get(
             "/api/v1/notes/export/",
-            json={
-                "export_type": ExportType.MARKDOWN,
-                "export_target": ExportTarget.SINGLE_NOTE,
+            params={
+                "export_type": ExportType.MARKDOWN.value,
+                "export_target": ExportTarget.SINGLE_NOTE.value,
                 "export_target_id": note.id
             },
             headers=auth_headers
@@ -85,11 +85,11 @@ class TestNotesExportAPI:
             create_data=NoteCreateSchema(title="Note 2", body="Body 2", folder_id=folder.id)
         )
         
-        response = client.post(
+        response = client.get(
             "/api/v1/notes/export/",
-            json={
-                "export_type": ExportType.MARKDOWN,
-                "export_target": ExportTarget.FOLDER_NOTES,
+            params={
+                "export_type": ExportType.MARKDOWN.value,
+                "export_target": ExportTarget.FOLDER_NOTES.value,
                 "export_target_id": folder.id
             },
             headers=auth_headers
@@ -127,11 +127,11 @@ class TestNotesExportAPI:
             create_data=NoteCreateSchema(title="Sub Note", body="Sub Body", folder_id=folder.id)
         )
         
-        response = client.post(
+        response = client.get(
             "/api/v1/notes/export/",
-            json={
-                "export_type": ExportType.HTML,
-                "export_target": ExportTarget.ALL_NOTES
+            params={
+                "export_type": ExportType.HTML.value,
+                "export_target": ExportTarget.ALL_NOTES.value
             },
             headers=auth_headers
         )
@@ -146,11 +146,11 @@ class TestNotesExportAPI:
             assert "Sub Note.html" in filenames
 
     def test_export_not_found(self, client: TestClient, test_user, auth_headers):
-        response = client.post(
+        response = client.get(
             "/api/v1/notes/export/",
-            json={
-                "export_type": ExportType.MARKDOWN,
-                "export_target": ExportTarget.SINGLE_NOTE,
+            params={
+                "export_type": ExportType.MARKDOWN.value,
+                "export_target": ExportTarget.SINGLE_NOTE.value,
                 "export_target_id": 9999
             },
             headers=auth_headers
@@ -160,9 +160,9 @@ class TestNotesExportAPI:
 
     def test_export_bad_request(self, client: TestClient, test_user, auth_headers):
         # Missing export_target
-        response = client.post(
+        response = client.get(
             "/api/v1/notes/export/",
-            json={"export_type": ExportType.MARKDOWN},
+            params={"export_type": ExportType.MARKDOWN.value},
             headers=auth_headers
         )
         assert response.status_code == 422
