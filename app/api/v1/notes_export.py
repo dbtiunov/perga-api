@@ -13,8 +13,8 @@ router = APIRouter()
 
 @router.get('/')
 def notes_export(
-    export_type: ExportType = Query(..., description='Export type: html, markdown'),
-    export_target: ExportTarget = Query(..., description='Export target: single_note, folder_notes, all_notes'),
+    export_type: ExportType = Query(..., description='Export type: HTML, Markdown, PDF'),
+    export_target: ExportTarget = Query(..., description='Export target: Single note, Folder notes, All notes'),
     export_target_id: int | None = Query(None),
     db: Session = Depends(get_db),
     current_user: UserSchema = Depends(AuthService.get_current_user)

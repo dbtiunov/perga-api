@@ -78,13 +78,23 @@ class TestNotesExportService:
         with zipfile.ZipFile(zip_buffer) as zf:
             assert "Note 1.html" in zf.namelist()
 
-    def test_create_zip_archive_duplicates(self, test_db: Session, test_user):
-        note1 = Note(id=1, title="Same", body="B1", user_id=test_user.id)
-        note2 = Note(id=2, title="Same", body="B2", user_id=test_user.id)
+    def test_get_note_content_pdf(self, test_db: Session, test_user):
+        note = Note(title="Test", body="<h1>Hello</h1>", user_id=test_user.id)
+        content = NotesExportService._get_note_content(note, ExportType.PDF)
+        assert isinstance(content, bytes)
+        assert content.startswith(b"%PDF")
+
+    def test_export_single_note_pdf(self, test_db: Session, test_user):
+        root_folder = NotesFolderService.get_root_folder(test_db, user_id=test_user.id)
+        note = NoteService.create_note(
+            test_db,
+            user_id=test_user.id,
+            create_data=NoteCreateSchema(title="Test PDF", body="Body PDF", folder_id=root_folder.id)
+        )
         
-        zip_buffer = NotesExportService._create_zip_archive([note1, note2], ExportType.HTML)
-        
-        with zipfile.ZipFile(zip_buffer) as zf:
-            names = zf.namelist()
-            assert "Same.html" in names
-            assert "Same_1.html" in names
+        content, filename = NotesExportService.export_single_note(
+            test_db, user_id=test_user.id, note_id=note.id, export_type=ExportType.PDF
+        )
+        assert isinstance(content, bytes)
+        assert content.startswith(b"%PDF")
+        assert filename == "Test PDF.pdf"

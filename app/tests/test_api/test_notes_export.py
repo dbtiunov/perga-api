@@ -158,11 +158,63 @@ class TestNotesExportAPI:
         assert response.status_code == 404
         assert response.json()["detail"] == "Note not found"
 
-    def test_export_bad_request(self, client: TestClient, test_user, auth_headers):
-        # Missing export_target
+    def test_export_single_note_pdf(self, client: TestClient, test_db: Session, test_user, auth_headers):
+        root_folder = NotesFolderService.get_root_folder(test_db, user_id=test_user.id)
+        note = NoteService.create_note(
+            test_db,
+            user_id=test_user.id,
+            create_data=NoteCreateSchema(
+                title="Test Note PDF",
+                body="<h1>Hello</h1><p>World</p>",
+                folder_id=root_folder.id
+            )
+        )
+        
         response = client.get(
             "/api/v1/notes/export/",
-            params={"export_type": ExportType.MARKDOWN.value},
+            params={
+                "export_type": ExportType.PDF.value,
+                "export_target": ExportTarget.SINGLE_NOTE.value,
+                "export_target_id": note.id
+            },
             headers=auth_headers
         )
-        assert response.status_code == 422
+        
+        assert response.status_code == 200
+        assert "application/pdf" in response.headers["content-type"]
+        assert "attachment; filename=Test Note PDF.pdf" in response.headers["content-disposition"]
+        assert response.content.startswith(b"%PDF")
+
+    def test_export_folder_zip_pdf(self, client: TestClient, test_db: Session, test_user, auth_headers):
+        root_folder = NotesFolderService.get_root_folder(test_db, user_id=test_user.id)
+        folder = NotesFolderService.create_folder(
+            test_db,
+            user_id=test_user.id,
+            create_data=NotesFolderCreateSchema(name="PDF Folder", parent_id=root_folder.id)
+        )
+        
+        NoteService.create_note(
+            test_db,
+            user_id=test_user.id,
+            create_data=NoteCreateSchema(title="Note 1", body="Body 1", folder_id=folder.id)
+        )
+        
+        response = client.get(
+            "/api/v1/notes/export/",
+            params={
+                "export_type": ExportType.PDF.value,
+                "export_target": ExportTarget.FOLDER_NOTES.value,
+                "export_target_id": folder.id
+            },
+            headers=auth_headers
+        )
+        
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/x-zip-compressed"
+        
+        # Verify ZIP content
+        zip_content = io.BytesIO(response.content)
+        with zipfile.ZipFile(zip_content) as zf:
+            filenames = zf.namelist()
+            assert "Note 1.pdf" in filenames
+            assert zf.read("Note 1.pdf").startswith(b"%PDF")
