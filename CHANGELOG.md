@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2026-03-15
+
+### Added
+
+- Ability to export notes as Markdown, HTML and PDF
+
 ## [1.1.0] - 2026-03-07
 
 ### Added
