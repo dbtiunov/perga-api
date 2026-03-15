@@ -185,6 +185,46 @@ class TestNotesExportAPI:
         assert "attachment; filename=Test Note PDF.pdf" in response.headers["content-disposition"]
         assert response.content.startswith(b"%PDF")
 
+    def test_export_folder_zip_recursive(self, client: TestClient, test_db: Session, test_user, auth_headers):
+        root_folder = NotesFolderService.get_root_folder(test_db, user_id=test_user.id)
+        folder = NotesFolderService.create_folder(
+            test_db,
+            user_id=test_user.id,
+            create_data=NotesFolderCreateSchema(name="Parent", parent_id=root_folder.id)
+        )
+        subfolder = NotesFolderService.create_folder(
+            test_db,
+            user_id=test_user.id,
+            create_data=NotesFolderCreateSchema(name="Child", parent_id=folder.id)
+        )
+        NoteService.create_note(
+            test_db,
+            user_id=test_user.id,
+            create_data=NoteCreateSchema(title="Note 1", body="B1", folder_id=folder.id)
+        )
+        NoteService.create_note(
+            test_db,
+            user_id=test_user.id,
+            create_data=NoteCreateSchema(title="Note 2", body="B2", folder_id=subfolder.id)
+        )
+
+        response = client.get(
+            "/api/v1/notes/export/",
+            params={
+                "export_type": ExportType.HTML.value,
+                "export_target": ExportTarget.FOLDER_NOTES.value,
+                "export_target_id": folder.id
+            },
+            headers=auth_headers
+        )
+
+        assert response.status_code == 200
+        zip_content = io.BytesIO(response.content)
+        with zipfile.ZipFile(zip_content) as zf:
+            filenames = zf.namelist()
+            assert "Note 1.html" in filenames
+            assert "Note 2.html" in filenames
+
     def test_export_folder_zip_pdf(self, client: TestClient, test_db: Session, test_user, auth_headers):
         root_folder = NotesFolderService.get_root_folder(test_db, user_id=test_user.id)
         folder = NotesFolderService.create_folder(

@@ -78,6 +78,101 @@ class TestNotesExportService:
         with zipfile.ZipFile(zip_buffer) as zf:
             assert "Note 1.html" in zf.namelist()
 
+    def test_export_folder_recursive(self, test_db: Session, test_user):
+        folder = NotesFolderService.create_folder(
+            test_db, user_id=test_user.id, create_data=NotesFolderCreateSchema(name="Parent")
+        )
+        subfolder = NotesFolderService.create_folder(
+            test_db,
+            user_id=test_user.id,
+            create_data=NotesFolderCreateSchema(name="Child", parent_id=folder.id)
+        )
+        NoteService.create_note(
+            test_db,
+            user_id=test_user.id,
+            create_data=NoteCreateSchema(title="Note 1", body="B1", folder_id=folder.id)
+        )
+        NoteService.create_note(
+            test_db,
+            user_id=test_user.id,
+            create_data=NoteCreateSchema(title="Note 2", body="B2", folder_id=subfolder.id)
+        )
+        
+        # This note should be ignored
+        deleted_note = NoteService.create_note(
+            test_db,
+            user_id=test_user.id,
+            create_data=NoteCreateSchema(title="Deleted Note", body="B3", folder_id=folder.id)
+        )
+        deleted_note.is_deleted = True
+        test_db.commit()
+
+        zip_buffer, filename = NotesExportService.export_folder(
+            test_db, user_id=test_user.id, folder_id=folder.id, export_type=ExportType.HTML
+        )
+        assert zip_buffer is not None
+        with zipfile.ZipFile(zip_buffer) as zf:
+            filenames = zf.namelist()
+            assert "Note 1.html" in filenames
+            assert "Note 2.html" in filenames
+            assert "Deleted Note.html" not in filenames
+
+    def test_export_folder_recursive_with_deleted_subfolder(self, test_db: Session, test_user):
+        folder = NotesFolderService.create_folder(
+            test_db, user_id=test_user.id, create_data=NotesFolderCreateSchema(name="Parent")
+        )
+        subfolder = NotesFolderService.create_folder(
+            test_db,
+            user_id=test_user.id,
+            create_data=NotesFolderCreateSchema(name="Deleted Child", parent_id=folder.id)
+        )
+        NoteService.create_note(
+            test_db,
+            user_id=test_user.id,
+            create_data=NoteCreateSchema(title="Note 1", body="B1", folder_id=folder.id)
+        )
+        NoteService.create_note(
+            test_db,
+            user_id=test_user.id,
+            create_data=NoteCreateSchema(title="Note 2", body="B2", folder_id=subfolder.id)
+        )
+        
+        subfolder.is_deleted = True
+        test_db.commit()
+
+        zip_buffer, filename = NotesExportService.export_folder(
+            test_db, user_id=test_user.id, folder_id=folder.id, export_type=ExportType.HTML
+        )
+        assert zip_buffer is not None
+        with zipfile.ZipFile(zip_buffer) as zf:
+            filenames = zf.namelist()
+            assert "Note 1.html" in filenames
+            assert "Note 2.html" not in filenames
+
+    def test_export_zip_duplicate_filenames(self, test_db: Session, test_user):
+        folder = NotesFolderService.create_folder(
+            test_db, user_id=test_user.id, create_data=NotesFolderCreateSchema(name="Duplicates")
+        )
+        # Two notes with same title
+        NoteService.create_note(
+            test_db,
+            user_id=test_user.id,
+            create_data=NoteCreateSchema(title="Duplicate", body="B1", folder_id=folder.id)
+        )
+        NoteService.create_note(
+            test_db,
+            user_id=test_user.id,
+            create_data=NoteCreateSchema(title="Duplicate", body="B2", folder_id=folder.id)
+        )
+
+        zip_buffer, filename = NotesExportService.export_folder(
+            test_db, user_id=test_user.id, folder_id=folder.id, export_type=ExportType.HTML
+        )
+        with zipfile.ZipFile(zip_buffer) as zf:
+            filenames = zf.namelist()
+            assert "Duplicate.html" in filenames
+            assert "Duplicate_1.html" in filenames
+
     def test_get_note_content_pdf(self, test_db: Session, test_user):
         note = Note(title="Test", body="<h1>Hello</h1>", user_id=test_user.id)
         content = NotesExportService._get_note_content(note, ExportType.PDF)
