@@ -4,6 +4,7 @@ from app.const.planner import WeekStartDay
 
 
 class UserSchema(BaseModel):
+    id: int
     username: str
     email: str
     week_start_day: WeekStartDay
