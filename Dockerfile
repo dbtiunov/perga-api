@@ -6,15 +6,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     libpangoft2-1.0-0 \
-    libgdk-pixbuf2.0-0 \
+    libgdk-pixbuf-xlib-2.0-0 \
     libffi-dev \
-    libjpeg62-turbo \
-    libpng16-16 \
+    libjpeg-dev \
+    libpng-dev \
     fontconfig \
     shared-mime-info \
     fonts-dejavu-core \
     fonts-liberation \
-    fonts-noto-core \
+    fonts-noto \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

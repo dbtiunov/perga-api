@@ -28,7 +28,7 @@ class NotesExportService:
                 {note.body}
             </body>
             </html>
-            """
+        """
         return HTML(string=html_content).write_pdf()
 
     @classmethod
