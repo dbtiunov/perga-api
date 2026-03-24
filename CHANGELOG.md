@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2] - 2026-03-24
+
+### Added
+
+- Ability to import Markdown, HTML and TXT notes
+
 ## [1.1.1] - 2026-03-15
 
 ### Added
