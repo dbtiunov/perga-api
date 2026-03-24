@@ -7,7 +7,7 @@ from starlette import status
 from starlette.responses import RedirectResponse, Response
 
 from app.core.config import settings
-from app.api.v1 import planner_days, planner_agendas, auth, notes, notes_folders, notes_export
+from app.api.v1 import planner_days, planner_agendas, auth, notes, notes_folders, notes_export, notes_import
 
 # Ensure logs directory exists
 logs_dir = os.path.join(os.path.dirname(__file__), 'logs')
@@ -53,6 +53,7 @@ app.include_router(planner_agendas.router, prefix=f'{router_prefix}planner/agend
 
 app.include_router(notes_folders.router, prefix=f"{router_prefix}notes/folders", tags=['notes_folders'])
 app.include_router(notes_export.router, prefix=f"{router_prefix}notes/export", tags=['notes_export'])
+app.include_router(notes_import.router, prefix=f"{router_prefix}notes/import", tags=['notes_import'])
 app.include_router(notes.router, prefix=f'{router_prefix}notes', tags=['notes'])
 
 @app.get('/')

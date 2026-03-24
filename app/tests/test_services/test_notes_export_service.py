@@ -114,7 +114,7 @@ class TestNotesExportService:
         with zipfile.ZipFile(zip_buffer) as zf:
             filenames = zf.namelist()
             assert "Note 1.html" in filenames
-            assert "Note 2.html" in filenames
+            assert "Child/Note 2.html" in filenames
             assert "Deleted Note.html" not in filenames
 
     def test_export_folder_recursive_with_deleted_subfolder(self, test_db: Session, test_user):
@@ -147,7 +147,7 @@ class TestNotesExportService:
         with zipfile.ZipFile(zip_buffer) as zf:
             filenames = zf.namelist()
             assert "Note 1.html" in filenames
-            assert "Note 2.html" not in filenames
+            assert "Deleted Child/Note 2.html" not in filenames
 
     def test_export_zip_duplicate_filenames(self, test_db: Session, test_user):
         folder = NotesFolderService.create_folder(

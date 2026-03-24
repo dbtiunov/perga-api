@@ -59,13 +59,22 @@ class NotesExportService:
         return f'{safe_title}.{extension}'
 
     @classmethod
-    def _create_zip_archive(cls, notes: list[Note], export_type: ExportType) -> io.BytesIO:
+    def _create_zip_archive(cls, items: list[Note | tuple[Note, str]], export_type: ExportType) -> io.BytesIO:
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED, False) as zip_file:
             used_filenames = set()
-            for note in notes:
+            for item in items:
+                if isinstance(item, tuple):
+                    note, rel_path = item
+                else:
+                    note = item
+                    rel_path = ''
+
                 content = cls._get_note_content(note, export_type)
                 base_filename = cls._generate_export_filename(note, export_type)
+                
+                if rel_path:
+                    base_filename = f"{rel_path.strip('/')}/{base_filename}"
 
                 # Handle duplicate filenames in ZIP
                 filename = base_filename
@@ -80,6 +89,19 @@ class NotesExportService:
 
         zip_buffer.seek(0)
         return zip_buffer
+
+    @classmethod
+    def _get_notes_with_paths(cls, folder: NotesFolder, current_path: str = '') -> list[tuple[Note, str]]:
+        items = []
+        for note in folder.notes:
+            if not note.is_deleted:
+                items.append((note, current_path))
+        
+        for subfolder in folder.subfolders:
+            if not subfolder.is_deleted:
+                new_path = f"{current_path}/{subfolder.name}".strip('/')
+                items.extend(cls._get_notes_with_paths(subfolder, new_path))
+        return items
 
     @classmethod
     def _get_all_notes_in_folder(cls, folder: NotesFolder) -> list[Note]:
@@ -109,8 +131,8 @@ class NotesExportService:
         if not folder:
             return None, None
         
-        notes = cls._get_all_notes_in_folder(folder)
-        return cls._create_zip_archive(notes, export_type), f'notes_folder_{folder.name}.zip'
+        items = cls._get_notes_with_paths(folder)
+        return cls._create_zip_archive(items, export_type), f'notes_folder_{folder.name}.zip'
 
     @classmethod
     def export_all_notes(

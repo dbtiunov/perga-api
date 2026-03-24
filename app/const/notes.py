@@ -31,3 +31,6 @@ EXPORT_MEDIA_TYPE_MAP = {
     ExportType.HTML: 'text/html',
     ExportType.PDF: 'application/pdf',
 }
+
+IMPORT_SIZE_LIMIT_MB = 10
+IMPORT_SIZE_LIMIT = IMPORT_SIZE_LIMIT_MB * 1024 * 1024
