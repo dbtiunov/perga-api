@@ -223,7 +223,7 @@ class TestNotesExportAPI:
         with zipfile.ZipFile(zip_content) as zf:
             filenames = zf.namelist()
             assert "Note 1.html" in filenames
-            assert "Note 2.html" in filenames
+            assert "Child/Note 2.html" in filenames
 
     def test_export_folder_zip_pdf(self, client: TestClient, test_db: Session, test_user, auth_headers):
         root_folder = NotesFolderService.get_root_folder(test_db, user_id=test_user.id)

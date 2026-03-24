@@ -1,5 +1,8 @@
+import html
 import io
+import markdown
 import os
+import re
 import zipfile
 from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
@@ -18,16 +21,19 @@ class NotesImportService:
         
         # try to find a title
         title = ''
-        if soup.title:
-            title = soup.title.string
-        elif soup.h1:
-            title = soup.h1.get_text()
-            
+        if soup.title and soup.title.string:
+            title = soup.title.string.strip()
+        elif first_h1 := soup.find('h1'):
+            title = first_h1.get_text().strip()
+            first_h1.decompose() # remove the first title tag from the body to avoid duplication
+
+        # get body content as a string with HTML
         if soup.body:
-            body = ''.join(str(tag) for tag in soup.body.contents)
+            contents = soup.body.contents
         else:
-            body = content
-            
+            contents = soup.contents
+        body = ''.join(str(tag) for tag in contents)
+
         return title or 'Untitled Note', body
 
     @classmethod
@@ -42,13 +48,18 @@ class NotesImportService:
                 body_start_index = index + 1
                 break
         
-        body = '\n'.join(lines[body_start_index:]).strip()
-        return title, body
+        body_md = '\n'.join(lines[body_start_index:]).strip()
+        body_html = markdown.markdown(body_md)
+        # to avoid losing line breaks, replace \n with empty paragraph tags
+        # but not in between of lists
+        body_html = re.sub(r'\n(?=<(?!li|/ul|/ol))', '<p></p>', body_html)
+        return title, body_html
 
     @classmethod
     def _parse_txt(cls, content: str, filename: str) -> tuple[str, str]:
         title = os.path.splitext(filename)[0]
-        return title, content
+        body_html = f'<p>{html.escape(content)}</p>'
+        return title, body_html
 
     @classmethod
     def import_file(
@@ -63,6 +74,7 @@ class NotesImportService:
             # skip non utf-8 files
             return None
 
+        # parse file content and get the body as HTML
         if extension == '.md':
             title, body = cls._parse_markdown(text_content)
         elif extension in ('.html', '.htm'):
