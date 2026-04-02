@@ -1,3 +1,4 @@
+import nh3
 from sqlalchemy.orm import Session
 
 from app.models.notes import Note
@@ -16,6 +17,9 @@ class NoteService(BaseService[Note]):
     @classmethod
     def create_note(cls, db: Session, user_id: int, create_data: NoteCreateSchema) -> Note:
         data = create_data.model_dump()
+        if data.get('body'):
+            data['body'] = nh3.clean(data['body'])
+            
         if data.get('folder_id') is None:
             root_folder = NotesFolderService.get_root_folder(db, user_id)
             data['folder_id'] = root_folder.id
@@ -31,9 +35,11 @@ class NoteService(BaseService[Note]):
         db_note = cls.get_note(db, note_id, user_id)
         if not db_note:
             return None
-        update_data = update_data.model_dump(exclude_unset=True)
+        update_data_dict = update_data.model_dump(exclude_unset=True)
+        if update_data_dict.get('body'):
+            update_data_dict['body'] = nh3.clean(update_data_dict['body'])
         
-        for field, value in update_data.items():
+        for field, value in update_data_dict.items():
             setattr(db_note, field, value)
         db.commit()
 
