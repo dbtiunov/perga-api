@@ -122,6 +122,8 @@ class TestAuthService:
         
         assert user is None
 
+    @pytest.mark.anyio
+    @pytest.mark.parametrize("anyio_backend", ["asyncio"])
     @patch('app.services.auth_service.jwt.decode')
     async def test_get_current_user_success(self, mock_decode, test_db, test_user):
         """Test that get_current_user returns the user when token is valid"""
@@ -137,6 +139,8 @@ class TestAuthService:
         # Verify that jwt.decode was called with the expected arguments
         mock_decode.assert_called_once_with("valid_token", SECRET_KEY, algorithms=[ALGORITHM])
 
+    @pytest.mark.anyio
+    @pytest.mark.parametrize("anyio_backend", ["asyncio"])
     @patch('app.services.auth_service.jwt.decode')
     async def test_get_current_user_jwt_error(self, mock_decode, test_db):
         """Test that get_current_user raises an exception when token is invalid"""
@@ -151,6 +155,8 @@ class TestAuthService:
         assert excinfo.value.status_code == 401
         assert "Could not validate credentials" in excinfo.value.detail
 
+    @pytest.mark.anyio
+    @pytest.mark.parametrize("anyio_backend", ["asyncio"])
     @patch('app.services.auth_service.jwt.decode')
     async def test_get_current_user_missing_sub(self, mock_decode, test_db):
         """Test that get_current_user raises an exception when sub is missing"""
@@ -165,6 +171,8 @@ class TestAuthService:
         assert excinfo.value.status_code == 401
         assert "Could not validate credentials" in excinfo.value.detail
 
+    @pytest.mark.anyio
+    @pytest.mark.parametrize("anyio_backend", ["asyncio"])
     @patch('app.services.auth_service.jwt.decode')
     async def test_get_current_user_invalid_sub(self, mock_decode, test_db):
         """Test that get_current_user raises an exception when sub is invalid"""
@@ -179,6 +187,8 @@ class TestAuthService:
         assert excinfo.value.status_code == 401
         assert "Could not validate credentials" in excinfo.value.detail
 
+    @pytest.mark.anyio
+    @pytest.mark.parametrize("anyio_backend", ["asyncio"])
     @patch('app.services.auth_service.jwt.decode')
     async def test_get_current_user_nonexistent_user(self, mock_decode, test_db):
         """Test that get_current_user raises an exception when user doesn't exist"""
