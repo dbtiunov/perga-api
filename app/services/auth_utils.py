@@ -43,13 +43,15 @@ def create_token(
     token_type: TokenType = TokenType.ACCESS
 ) -> str:
     """
-    Creates a JWT token with expiration timeout based on provided:
-    1. Custom timeout
-    2. Token type
+    Creates a JWT token with expiration timeout based on token_type or custom_timeout.
+
+    Payload contains the following keys:
+    - 'sub' (Subject): user_id, stored as a string.
+    - 'exp' (Expiration Time): time after which the token is invalid.
+    - 'token_type': The type of token, 'access' or 'refresh'.
     """
     to_encode = data.copy()
 
-    # Ensure 'sub' (jwt subject) is a string
     if to_encode.get('sub'):
         to_encode['sub'] = str(to_encode['sub'])
 
