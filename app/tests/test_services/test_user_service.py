@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.schemas.user import UserCreateSchema, UserUpdateSchema
-from app.services.auth_utils import verify_password
+from app.services.auth_utils import validate_password
 from app.services.user_service import UserService
 
 
@@ -64,7 +64,7 @@ class TestUserService:
         assert db_user.id is not None
         assert db_user.username == "newuser"
         assert db_user.email == "newuser@example.com"
-        assert verify_password("password123", db_user.hashed_password)
+        assert validate_password("password123", db_user.hashed_password)
         assert db_user.is_active is True
 
     def test_create_user_duplicate_email(self, test_db: Session, test_user):
@@ -130,7 +130,7 @@ class TestUserService:
             current_password="password123",
             new_password="newpassword123"
         )
-        assert verify_password("newpassword123", db_user.hashed_password)
+        assert validate_password("newpassword123", db_user.hashed_password)
 
         # Attempt to change with wrong current password
         with pytest.raises(ValueError) as excinfo:

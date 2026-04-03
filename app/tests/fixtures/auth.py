@@ -1,7 +1,7 @@
 import pytest
 
 from app.models.user import User
-from app.services.auth_utils import get_password_hash
+from app.services.auth_utils import generate_password_hash
 
 
 @pytest.fixture(scope="function")
@@ -10,7 +10,7 @@ def test_user(test_db):
     user = User(
         username="testuser",
         email="test@example.com",
-        hashed_password=get_password_hash("password123"),
+        hashed_password=generate_password_hash("password123"),
         is_active=True,
     )
     test_db.add(user)

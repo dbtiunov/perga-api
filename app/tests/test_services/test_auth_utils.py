@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt
 
 from app.services.auth_utils import (
-    get_password_hash, verify_password, create_token,
+    generate_password_hash, validate_password, create_token,
     create_access_token, create_refresh_token,
     SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
 )
@@ -15,19 +15,19 @@ class TestAuthUtils:
         """Test that password hashing and verification work correctly"""
         # Hash a password
         password = "test_password"
-        hashed_password = get_password_hash(password)
+        hashed_password = generate_password_hash(password)
         
         # Verify that the hash is different from the original password
         assert hashed_password != password
         
         # Verify that the password can be verified against the hash
-        assert verify_password(password, hashed_password) is True
+        assert validate_password(password, hashed_password) is True
         
         # Verify that an incorrect password fails verification
-        assert verify_password("wrong_password", hashed_password) is False
+        assert validate_password("wrong_password", hashed_password) is False
         
         # Verify that an invalid hash format is handled gracefully
-        assert verify_password(password, "invalid_hash_format") is False
+        assert validate_password(password, "invalid_hash_format") is False
 
     def test_create_token(self):
         """Test that create_token creates a valid JWT token"""

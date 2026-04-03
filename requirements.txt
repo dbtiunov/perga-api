@@ -6,8 +6,7 @@ python-dotenv==1.2.2
 pydantic==2.12.5
 pydantic-settings==2.13.1
 python-jose[cryptography]==3.5.0
-passlib[bcrypt]==1.7.4
-bcrypt==4.2.0
+bcrypt==5.0.0
 python-multipart==0.0.22
 psycopg2-binary==2.9.11
 python-dateutil==2.9.0.post0

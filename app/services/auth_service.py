@@ -9,7 +9,7 @@ from app.models.user import User
 from app.schemas.auth import TokenPayloadSchema
 from app.services.user_service import UserService
 from app.services.auth_utils import (
-    verify_password, create_access_token, create_refresh_token,
+    validate_password, create_access_token, create_refresh_token,
     SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 )
 
@@ -25,7 +25,7 @@ class AuthService:
             UserService.get_user_by_username(db, username)
             or UserService.get_user_by_email(db, username)
         )
-        if not user or not verify_password(password, user.hashed_password):
+        if not user or not validate_password(password, user.hashed_password):
             return None
         return user
 

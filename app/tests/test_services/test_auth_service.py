@@ -5,7 +5,7 @@ from unittest.mock import patch
 from app.services.auth_service import AuthService
 from app.services.auth_utils import (
     SECRET_KEY, ALGORITHM,
-    create_access_token, create_refresh_token, get_password_hash
+    create_access_token, create_refresh_token, generate_password_hash
 )
 from app.models.user import User
 
@@ -20,7 +20,7 @@ class TestAuthService:
         user = User(
             username="testuser",
             email="auth_test@example.com",
-            hashed_password=get_password_hash(password),
+            hashed_password=generate_password_hash(password),
             is_active=True,
         )
         test_db.add(user)
@@ -40,7 +40,7 @@ class TestAuthService:
         user = User(
             username="testuser",
             email="auth_test@example.com",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=generate_password_hash("password123"),
             is_active=True,
         )
         test_db.add(user)

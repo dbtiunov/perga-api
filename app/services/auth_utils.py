@@ -1,13 +1,9 @@
 from datetime import datetime, timedelta, timezone
 
+import bcrypt
 from jose import jwt
-from passlib import exc as passlib_exc
-from passlib.context import CryptContext
 
 from app.core.config import settings
-
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT settings
 SECRET_KEY = settings.SECRET_KEY
@@ -16,15 +12,32 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 REFRESH_TOKEN_EXPIRE_DAYS = 30
 
 
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+def generate_password_hash(plain_password: str) -> str:
+    """
+    Hashes password using bcrypt:
+    1. Converts plain password to bytes
+    2. Generates salt
+    3. Hashes password with salt
+    4. Returns hashed bytes as string
+    """
+    password_bytes = plain_password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(password_bytes, salt)
+    return hashed_password.decode('utf-8')
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
+def validate_password(plain_password: str, hashed_password: str) -> bool:
+    """ Verifies a plain password against a hashed password """
     try:
-        result = pwd_context.verify(plain_password, hashed_password)
-    except passlib_exc.UnknownHashError:
-        # Handle case when hash format cannot be identified
+        password_bytes = plain_password.encode('utf-8')
+        hashed_bytes = hashed_password.encode('utf-8')
+    except UnicodeEncodeError:
+        return False
+
+    try:
+        result = bcrypt.checkpw(password_bytes, hashed_bytes)
+    except ValueError:
+        # invalid bcrypt hash format
         result = False
 
     return result

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.schemas.user import UserCreateSchema, UserUpdateSchema
 from app.services.base_service import BaseService
-from app.services.auth_utils import get_password_hash, verify_password
+from app.services.auth_utils import generate_password_hash, validate_password
 
 
 class UserService(BaseService[User]):
@@ -31,7 +31,7 @@ class UserService(BaseService[User]):
             raise ValueError("Username already taken")
 
         # Create new user
-        hashed_password = get_password_hash(create_data.password)
+        hashed_password = generate_password_hash(create_data.password)
         db_user = User(
             username=create_data.username,
             email=create_data.email,
@@ -65,12 +65,12 @@ class UserService(BaseService[User]):
             return None
 
         # Verify current password
-        if not verify_password(current_password, user.hashed_password):
+        if not validate_password(current_password, user.hashed_password):
             # Do not change anything if verification fails
             raise ValueError("Incorrect current password")
 
         # Update to new password
-        user.hashed_password = get_password_hash(new_password)
+        user.hashed_password = generate_password_hash(new_password)
         db.commit()
 
         db.refresh(user)
