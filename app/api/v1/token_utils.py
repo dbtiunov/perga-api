@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.schemas.auth import TokenPayloadSchema
 from app.schemas.user import UserSchema
 from app.services.user_service import UserService
-from app.services.auth_utils import SECRET_KEY, ALGORITHM
+from app.services.auth_utils import SECRET_KEY, SIGNING_ALGORITHM
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token/")
 
@@ -20,7 +20,7 @@ async def get_current_user_from_token(token: str = Depends(oauth2_scheme), db: S
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[SIGNING_ALGORITHM])
         user_id_str = payload.get("sub")
         if user_id_str is None:
             raise credentials_exception

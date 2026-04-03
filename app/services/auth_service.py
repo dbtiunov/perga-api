@@ -1,23 +1,41 @@
-from datetime import timedelta
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
+from app.const.auth import SIGNING_ALGORITHM, TokenType
+from app.core.config import settings
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.auth import TokenPayloadSchema
+from app.services.auth_utils import validate_password, create_access_token, create_refresh_token
 from app.services.user_service import UserService
-from app.services.auth_utils import (
-    validate_password, create_access_token, create_refresh_token,
-    SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
-)
 
 # OAuth2 scheme for token authentication
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/access_token/")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f'{settings.API_V1_STR}/auth/access_token/')
 
 
 class AuthService:
+    CREDENTIALS_EXCEPTION = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail='Could not validate credentials',
+        headers={'WWW-Authenticate': 'Bearer'},
+    )
+
+    @staticmethod
+    def _extract_user_id(payload: dict) -> int | None:
+        """ Extracts user_id from payload, it is stored as a jwt subject """
+        user_id_str = payload.get('sub')
+        if user_id_str is None:
+            return None
+
+        try:
+            user_id = int(user_id_str)
+        except (ValueError, TypeError):
+            return None
+
+        return user_id
+
     @classmethod
     def authenticate_user(cls, db: Session, username: str, password: str) -> User | None:
         # Allow signing in using either username or email in the `username` field
@@ -31,44 +49,27 @@ class AuthService:
 
     @classmethod
     def create_user_tokens(cls, user_id: int) -> dict:
-        """ Returns dictionary with access_token, token_type, and refresh_token """
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
-            data={"sub": user_id}, expires_delta=access_token_expires
-        )
-        
-        # Create refresh token
-        refresh_token = create_refresh_token(
-            data={"sub": user_id}
-        )
-        
+        """ Creates and returns dict with access and refresh tokens """
+        data = {'sub': user_id}
         return {
-            "access_token": access_token,
-            "token_type": "bearer",
-            "refresh_token": refresh_token
+            'token_type': TokenType.BEARER,
+            'access_token': create_access_token(data=data),
+            'refresh_token': create_refresh_token(data=data)
         }
 
     @classmethod
     def validate_refresh_token(cls, db: Session, refresh_token: str) -> User | None:
-        """ Validate a refresh token and return the associated user """
+        """ Validates refresh token and return the associated user """
         try:
-            # Decode the refresh token
-            payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+            payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[SIGNING_ALGORITHM])
         except JWTError:
             return None
 
-        if payload.get("token_type") != "refresh":
+        if payload.get('token_type') != TokenType.REFRESH:
             return None
 
-        # Extract user ID
-        user_id_str = payload.get("sub")
-        if user_id_str is None:
-            return None
-
-        # Convert string user_id back to integer
-        try:
-            user_id = int(user_id_str)
-        except (ValueError, TypeError):
+        user_id = cls._extract_user_id(payload)
+        if not user_id:
             return None
 
         user = UserService.get_user_by_id(db, user_id=user_id)
@@ -77,31 +78,20 @@ class AuthService:
 
     @classmethod
     async def get_current_user(cls, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
-        """ Gets the current user from the access token """
-        credentials_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-        
+        """ Gets the current user from the access token or raises an exception """
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[SIGNING_ALGORITHM])
         except JWTError:
-            raise credentials_exception
+            raise cls.CREDENTIALS_EXCEPTION
 
-        user_id_str = payload.get("sub")
-        if user_id_str is None:
-            raise credentials_exception
+        user_id = cls._extract_user_id(payload)
+        if user_id is None:
+            raise cls.CREDENTIALS_EXCEPTION
 
-        # Convert string user_id back to integer
-        try:
-            user_id = int(user_id_str)
-        except (ValueError, TypeError):
-            raise credentials_exception
-
+        # ?
         token_data = TokenPayloadSchema(sub=user_id)
         user = UserService.get_user_by_id(db, user_id=token_data.sub)
         if user is None:
-            raise credentials_exception
+            raise cls.CREDENTIALS_EXCEPTION
             
         return user
