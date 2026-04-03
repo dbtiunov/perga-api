@@ -7,7 +7,6 @@ from app.const.auth import SIGNING_ALGORITHM, TokenType
 from app.core.config import settings
 from app.core.database import get_db
 from app.models.user import User
-from app.schemas.auth import TokenPayloadSchema
 from app.services.auth_utils import validate_password, create_access_token, create_refresh_token
 from app.services.user_service import UserService
 
@@ -88,9 +87,7 @@ class AuthService:
         if user_id is None:
             raise cls.CREDENTIALS_EXCEPTION
 
-        # ?
-        token_data = TokenPayloadSchema(sub=user_id)
-        user = UserService.get_user_by_id(db, user_id=token_data.sub)
+        user = UserService.get_user_by_id(db, user_id=user_id)
         if user is None:
             raise cls.CREDENTIALS_EXCEPTION
             
