@@ -4,24 +4,19 @@ from unittest.mock import patch
 
 from app.const.auth import SIGNING_ALGORITHM, TokenType
 from app.core.config import settings
+from app.models.user import User
 from app.services.auth_service import AuthService
 from app.services.auth_utils import create_access_token, create_refresh_token, generate_password_hash
-from app.models.user import User
+from app.tests.const import TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD
 
 
 class TestAuthService:
-    """Tests for the AuthService class"""
-    TEST_USERNAME = 'testuser'
-    TEST_PASSWORD = 'password123'
-    TEST_EMAIL = 'auth_test@example.com'
-
     def test_authenticate_user_success(self, test_db):
-        """Test that authenticate_user returns the user when credentials are correct"""
         # Create a test user
         user = User(
-            username=self.TEST_USERNAME,
-            email=self.TEST_EMAIL,
-            hashed_password=generate_password_hash(self.TEST_PASSWORD),
+            username=TEST_USERNAME,
+            email=TEST_EMAIL,
+            hashed_password=generate_password_hash(TEST_PASSWORD),
             is_active=True,
         )
         test_db.add(user)
@@ -29,45 +24,33 @@ class TestAuthService:
         test_db.refresh(user)
 
         # Authenticate with correct credentials
-        authenticated_user = AuthService.authenticate_user(test_db, user.username, self.TEST_PASSWORD)
+        authenticated_user = AuthService.authenticate_user(test_db, user.username, TEST_PASSWORD)
         
         assert authenticated_user is not None
         assert authenticated_user.id == user.id
-        assert authenticated_user.email == self.TEST_EMAIL
+        assert authenticated_user.email == TEST_EMAIL
 
     def test_authenticate_user_wrong_password(self, test_db):
-        """Test that authenticate_user returns None when password is incorrect"""
         # Create a test user
         user = User(
-            username=self.TEST_USERNAME,
-            email=self.TEST_EMAIL,
-            hashed_password=generate_password_hash(self.TEST_PASSWORD),
+            username=TEST_USERNAME,
+            email=TEST_EMAIL,
+            hashed_password=generate_password_hash(TEST_PASSWORD),
             is_active=True,
         )
         test_db.add(user)
         test_db.commit()
 
         # Authenticate with wrong password
-        authenticated_user = AuthService.authenticate_user(
-            test_db,
-            self.TEST_EMAIL,
-            "wrong_password"
-        )
-        
+        authenticated_user = AuthService.authenticate_user(test_db, TEST_EMAIL, 'wrong_password')
         assert authenticated_user is None
 
     def test_authenticate_user_nonexistent(self, test_db):
-        """Test that authenticate_user returns None when user doesn't exist"""
         # Authenticate with non-existent user
-        authenticated_user = AuthService.authenticate_user(
-            test_db,
-            'nonexistent@example.com',
-            self.TEST_PASSWORD
-        )
+        authenticated_user = AuthService.authenticate_user(test_db, 'nonexistent@example.com', TEST_PASSWORD)
         assert authenticated_user is None
 
     def test_create_user_tokens(self, test_user):
-        """Test that create_user_tokens returns valid tokens"""
         # Create tokens for the test user
         tokens = AuthService.create_user_tokens(test_user.id)
         
@@ -88,9 +71,8 @@ class TestAuthService:
         assert refresh_payload['token_type'] == TokenType.REFRESH
 
     def test_validate_refresh_token_valid(self, test_db, test_user):
-        """Test that validate_refresh_token returns the user when token is valid"""
         # Create a refresh token for the test user
-        refresh_token = create_refresh_token({"sub": test_user.id})
+        refresh_token = create_refresh_token({'sub': test_user.id})
         
         # Validate the refresh token
         user = AuthService.validate_refresh_token(test_db, refresh_token)
@@ -99,44 +81,33 @@ class TestAuthService:
         assert user.id == test_user.id
 
     def test_validate_refresh_token_invalid(self, test_db, test_user):
-        """Test that validate_refresh_token returns None when token is invalid"""
         # Create an access token (not a refresh token)
-        access_token = create_access_token({"sub": test_user.id})
+        access_token = create_access_token({'sub': test_user.id})
         
         # Validate the access token as a refresh token (should fail)
         user = AuthService.validate_refresh_token(test_db, access_token)
-        
         assert user is None
         
-        # Create an invalid token
-        invalid_token = 'invalid.token.string'
-        
         # Validate the invalid token
+        invalid_token = 'invalid.token.string'
         user = AuthService.validate_refresh_token(test_db, invalid_token)
-        
         assert user is None
 
     def test_validate_refresh_token_nonexistent_user(self, test_db):
-        """Test that validate_refresh_token returns None when user doesn't exist"""
-        # Create a refresh token for a non-existent user
-        refresh_token = create_refresh_token({'sub': 999})
-        
         # Validate the refresh token
+        refresh_token = create_refresh_token({'sub': 999})
         user = AuthService.validate_refresh_token(test_db, refresh_token)
-        
         assert user is None
 
     @pytest.mark.anyio
     @pytest.mark.parametrize('anyio_backend', ['asyncio'])
     @patch('app.services.auth_service.jwt.decode')
     async def test_get_current_user_success(self, mock_decode, test_db, test_user):
-        """Test that get_current_user returns the user when token is valid"""
         # Mock the jwt.decode function to return a payload with the test user's ID
         mock_decode.return_value = {'sub': str(test_user.id)}
         
         # Get the current user
         user = await AuthService.get_current_user('valid_token', test_db)
-        
         assert user is not None
         assert user.id == test_user.id
         
@@ -147,7 +118,6 @@ class TestAuthService:
     @pytest.mark.parametrize('anyio_backend', ['asyncio'])
     @patch('app.services.auth_service.jwt.decode')
     async def test_get_current_user_jwt_error(self, mock_decode, test_db):
-        """Test that get_current_user raises an exception when token is invalid"""
         # Mock the jwt.decode function to raise a JWTError
         mock_decode.side_effect = jwt.JWTError()
         
@@ -163,7 +133,6 @@ class TestAuthService:
     @pytest.mark.parametrize('anyio_backend', ['asyncio'])
     @patch('app.services.auth_service.jwt.decode')
     async def test_get_current_user_missing_sub(self, mock_decode, test_db):
-        """Test that get_current_user raises an exception when sub is missing"""
         # Mock the jwt.decode function to return a payload without a sub claim
         mock_decode.return_value = {'token_type': TokenType.ACCESS}
         
@@ -179,7 +148,6 @@ class TestAuthService:
     @pytest.mark.parametrize('anyio_backend', ['asyncio'])
     @patch('app.services.auth_service.jwt.decode')
     async def test_get_current_user_invalid_sub(self, mock_decode, test_db):
-        """Test that get_current_user raises an exception when sub is invalid"""
         # Mock the jwt.decode function to return a payload with an invalid sub claim
         mock_decode.return_value = {'sub': 'not_an_integer'}
         
@@ -195,7 +163,6 @@ class TestAuthService:
     @pytest.mark.parametrize('anyio_backend', ['asyncio'])
     @patch('app.services.auth_service.jwt.decode')
     async def test_get_current_user_nonexistent_user(self, mock_decode, test_db):
-        """Test that get_current_user raises an exception when user doesn't exist"""
         # Mock the jwt.decode function to return a payload with a non-existent user ID
         mock_decode.return_value = {'sub': '999'}
         

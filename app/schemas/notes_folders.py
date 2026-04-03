@@ -23,9 +23,9 @@ class NotesFolderSchema(BaseModel):
         from_attributes = True
 
 
-class NotesFolderRespsonseSchema(NotesFolderSchema):
+class NotesFolderResponseSchema(NotesFolderSchema):
     notes: list[NoteMetaSchema] = []
-    subfolders: list['NotesFolderRespsonseSchema'] = []
+    subfolders: list['NotesFolderResponseSchema'] = []
 
     @field_validator('notes', mode='after')
     @classmethod
@@ -37,6 +37,6 @@ class NotesFolderRespsonseSchema(NotesFolderSchema):
         from_attributes = True
 
 
-class NotesFoldersResponseSchema(BaseModel):
-    root_folder: NotesFolderRespsonseSchema
-    trash_folder: NotesFolderRespsonseSchema
+class GetFolderrsResponseSchema(BaseModel):
+    root_folder: NotesFolderResponseSchema
+    trash_folder: NotesFolderResponseSchema

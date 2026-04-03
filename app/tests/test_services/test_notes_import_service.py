@@ -68,7 +68,6 @@ class TestNotesImportService:
         zip_content = zip_buffer.getvalue()
         root_folder = NotesFolderService.create_import_folder(test_db, test_user.id)
         notes = NotesImportService.import_zip(test_db, test_user.id, zip_content, root_folder.id)
-        
         assert len(notes) == 3
         
         # Check note 1 (root)

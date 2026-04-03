@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime as dt
 from sqlalchemy.orm import Session
 
 from app.const.notes import NotesFolderType
@@ -13,9 +13,8 @@ class TestNotesFolderService:
         # 1. Create a parent folder
         parent_create = NotesFolderCreateSchema(name='Parent Folder')
         parent = NotesFolderService.create_folder(test_db, user_id=test_user.id, create_data=parent_create)
-        
         assert parent.id is not None
-        assert parent.name == 'Parent Folder'
+        assert parent.name == parent_create.name
         
         # 2. Create a subfolder
         subfolder_create = NotesFolderCreateSchema(name='Subfolder', parent_id=parent.id)
@@ -32,7 +31,7 @@ class TestNotesFolderService:
 
     def test_get_folders_includes_trash_and_root(self, test_db: Session, test_user):
         root_folder = NotesFolderService.get_root_folder(test_db, user_id=test_user.id)
-        NotesFolderService.create_folder(
+        regular_folder =NotesFolderService.create_folder(
             test_db,
             user_id=test_user.id,
             create_data=NotesFolderCreateSchema(name='Regular', parent_id=root_folder.id)
@@ -48,7 +47,7 @@ class TestNotesFolderService:
         
         test_db.refresh(data['root_folder'])
         assert len(data['root_folder'].subfolders) == 1
-        assert data['root_folder'].subfolders[0].name == 'Regular'
+        assert data['root_folder'].subfolders[0].name == regular_folder.name
 
     def test_empty_trash(self, test_db: Session, test_user):
         trash_folder = NotesFolderService.get_trash_folder(test_db, user_id=test_user.id)
@@ -120,8 +119,7 @@ class TestNotesFolderService:
         assert result is None
 
     def test_create_import_folder_unique_names(self, test_db: Session, test_user):
-        from datetime import datetime
-        current_date = datetime.now().strftime('%Y-%m-%d')
+        current_date = dt.datetime.now().strftime(NotesFolderService.IMPORT_FOLDER_DATE_FORMAT)
         base_name = f'import_{current_date}'
 
         # 1. Create first import folder
@@ -146,8 +144,7 @@ class TestNotesFolderService:
         assert folder4.name == f'{base_name}_1'
 
     def test_create_import_folder_with_different_base_names(self, test_db: Session, test_user):
-
-        current_date = datetime.now().strftime('%Y-%m-%d')
+        current_date = dt.datetime.now().strftime(NotesFolderService.IMPORT_FOLDER_DATE_FORMAT)
         base_name = f'import_{current_date}'
 
         # Create a folder that starts with the same prefix but is not exactly the base_name
