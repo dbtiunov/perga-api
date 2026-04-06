@@ -32,6 +32,21 @@ def get_items_by_days(
     return result
 
 
+@router.get("/items/range/", response_model=dict[date, list[PlannerDayItemSchema]])
+def get_items_by_range(
+    start_date: date = Query(..., description="Base date in ISO format (YYYY-MM-DD)"),
+    days_count: int = Query(1, description="Number of days to fetch starting from start_date"),
+    db: Session = Depends(get_db),
+    current_user: UserSchema = Depends(AuthService.get_current_user)
+):
+    """
+    Get items for a range of days starting from days_count.
+    Example request: /items/range/?days_count=2026-02-02&days_count=3
+    Result: {'2026-02-02': [...], '2026-02-03': [...], '2026-02-04': [...]}
+    """
+    return PlannerDayItemService.get_items_by_range(db, start_date, days_count, current_user.id)
+
+
 @router.post("/items/", response_model=PlannerDayItemSchema)
 def create_day_item(
     item: PlannerDayItemCreateSchema,

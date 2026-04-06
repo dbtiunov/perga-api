@@ -1,6 +1,6 @@
+import datetime as dt
 import logging
-from datetime import date
-
+from collections import defaultdict
 from sqlalchemy.orm import Session
 
 from app.const.planner import PlannerItemState
@@ -17,7 +17,7 @@ class PlannerDayItemService(BaseService[PlannerDayItem]):
     model = PlannerDayItem
 
     @classmethod
-    def get_new_item_index(cls, db: Session, day: date, user_id: int) -> int:
+    def get_new_item_index(cls, db: Session, day: dt.date, user_id: int) -> int:
         max_index_item: PlannerDayItem = cls.get_base_query(db).filter(
             PlannerDayItem.day == day,
             PlannerDayItem.user_id == user_id
@@ -33,12 +33,30 @@ class PlannerDayItemService(BaseService[PlannerDayItem]):
         return query.first()
 
     @classmethod
-    def get_items_by_day(cls, db: Session, day: date, user_id: int) -> list[PlannerDayItem]:
+    def get_items_by_day(cls, db: Session, day: dt.date, user_id: int) -> list[PlannerDayItem]:
         query = cls.get_base_query(db).filter(
             PlannerDayItem.user_id == user_id,
             PlannerDayItem.day == day
         )
         return query.order_by(PlannerDayItem.index).all()
+
+    @classmethod
+    def get_items_by_range(
+        cls, db: Session, start_date: dt.date, days_count: int, user_id: int
+    ) -> dict[dt.date, list[PlannerDayItem]]:
+        """ Get items for a range of days starting from start_date """
+        end_date = start_date + dt.timedelta(days=days_count - 1)
+        items = cls.get_base_query(db).filter(
+            PlannerDayItem.user_id == user_id,
+            PlannerDayItem.day >= start_date,
+            PlannerDayItem.day <= end_date
+        ).order_by(PlannerDayItem.day, PlannerDayItem.index).all()
+
+        result = defaultdict(list)
+        for item in items:
+            result[item.day].append(item)
+
+        return result
 
     @classmethod
     def create_day_item(cls, db: Session, item: PlannerDayItemCreateSchema, user_id: int) -> PlannerDayItem:
@@ -97,7 +115,7 @@ class PlannerDayItemService(BaseService[PlannerDayItem]):
         return True
 
     @classmethod
-    def copy_day_item(cls, db: Session, item_id: int, day: date, user_id: int) -> PlannerDayItem | None:
+    def copy_day_item(cls, db: Session, item_id: int, day: dt.date, user_id: int) -> PlannerDayItem | None:
         """ Create new item on specified date """
         db_item = cls.get_day_item(db, item_id, user_id)
         if not db_item:
@@ -116,7 +134,7 @@ class PlannerDayItemService(BaseService[PlannerDayItem]):
         return new_db_item
 
     @classmethod
-    def snooze_day_item(cls, db: Session, item_id: int, day: date, user_id: int) -> PlannerDayItem | None:
+    def snooze_day_item(cls, db: Session, item_id: int, day: dt.date, user_id: int) -> PlannerDayItem | None:
         """ Mark original item as snoozed and create new one on specified date """
         db_item = cls.get_day_item(db, item_id, user_id)
         if not db_item:

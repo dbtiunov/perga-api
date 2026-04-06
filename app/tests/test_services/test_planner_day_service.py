@@ -269,6 +269,29 @@ class TestPlannerDayItemService:
         copied_item = PlannerDayItemService.copy_day_item(test_db, item.id, tomorrow, 7)
         assert copied_item is None
 
+    def test_get_items_by_range(self, test_db: Session, test_user, test_day):
+        # Create items for multiple days
+        for i in range(3):
+            day = test_day + dt.timedelta(days=i)
+            PlannerDayItemService.create_day_item(
+                test_db,
+                item=PlannerDayItemCreateSchema(day=day, text=f'Item {i}'),
+                user_id=test_user.id
+            )
+
+        # Get items by range
+        items_by_day = PlannerDayItemService.get_items_by_range(test_db, test_day, 3, test_user.id)
+
+        assert len(items_by_day) == 3
+        assert test_day in items_by_day
+        assert test_day + dt.timedelta(days=1) in items_by_day
+        assert test_day + dt.timedelta(days=2) in items_by_day
+
+        assert len(items_by_day[test_day]) == 1
+        assert items_by_day[test_day][0].text == 'Item 0'
+        assert items_by_day[test_day + dt.timedelta(days=1)][0].text == 'Item 1'
+        assert items_by_day[test_day + dt.timedelta(days=2)][0].text == 'Item 2'
+
     def test_snooze_day_item(self, test_db: Session, test_user, test_day):
         # Create an item
         item = PlannerDayItem(
