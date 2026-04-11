@@ -1,4 +1,3 @@
-import datetime as dt
 from sqlalchemy.orm import Session
 
 from app.const.notes import NotesFolderType
@@ -117,47 +116,3 @@ class TestNotesFolderService:
             update_data=NotesFolderUpdateSchema(parent_id=folder_b.id)
         )
         assert result is None
-
-    def test_create_import_folder_unique_names(self, test_db: Session, test_user):
-        current_date = dt.datetime.now().strftime(NotesFolderService.IMPORT_FOLDER_DATE_FORMAT)
-        base_name = f'import_{current_date}'
-
-        # 1. Create first import folder
-        folder1 = NotesFolderService.create_import_folder(test_db, user_id=test_user.id)
-        assert folder1.name == base_name
-
-        # 2. Create second import folder
-        folder2 = NotesFolderService.create_import_folder(test_db, user_id=test_user.id)
-        assert folder2.name == f'{base_name}_1'
-
-        # 3. Create third import folder
-        folder3 = NotesFolderService.create_import_folder(test_db, user_id=test_user.id)
-        assert folder3.name == f'{base_name}_2'
-
-        # 4. If one is deleted, it should still be unique among non-deleted
-        # Actually the current implementation checks is_deleted == False
-        folder2.mark_as_deleted()
-        test_db.commit()
-
-        folder4 = NotesFolderService.create_import_folder(test_db, user_id=test_user.id)
-        # Since folder2 (base_name_1) is deleted, folder4 should take its name
-        assert folder4.name == f'{base_name}_1'
-
-    def test_create_import_folder_with_different_base_names(self, test_db: Session, test_user):
-        current_date = dt.datetime.now().strftime(NotesFolderService.IMPORT_FOLDER_DATE_FORMAT)
-        base_name = f'import_{current_date}'
-
-        # Create a folder that starts with the same prefix but is not exactly the base_name
-        # e.g., 'import_2026-03-19_something'
-        # This shouldn't interfere with the normal indexing unless it matches the pattern exactly
-        NotesFolderService.create_folder(
-            test_db,
-            user_id=test_user.id,
-            create_data=NotesFolderCreateSchema(name=f'{base_name}_something_else')
-        )
-
-        folder1 = NotesFolderService.create_import_folder(test_db, user_id=test_user.id)
-        assert folder1.name == base_name
-
-        folder2 = NotesFolderService.create_import_folder(test_db, user_id=test_user.id)
-        assert folder2.name == f'{base_name}_1'

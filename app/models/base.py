@@ -1,17 +1,18 @@
-from datetime import datetime, timezone
+import datetime as dt
 from sqlalchemy import Column, Integer, DateTime, Boolean
 
 from app.core.database import Base
+
 
 class BaseModel(Base):
     __abstract__ = True
 
     id = Column(Integer, primary_key=True, index=True)
-    created_dt = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    created_dt = Column(DateTime(timezone=True), default=lambda: dt.datetime.now(dt.timezone.utc))
     updated_dt = Column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc)
+        default=lambda: dt.datetime.now(dt.timezone.utc),
+        onupdate=lambda: dt.datetime.now(dt.timezone.utc)
     )
 
     is_deleted = Column(Boolean, default=False)
@@ -19,4 +20,4 @@ class BaseModel(Base):
 
     def mark_as_deleted(self):
         self.is_deleted = True
-        self.deleted_dt = datetime.now(timezone.utc)
+        self.deleted_dt = dt.datetime.now(dt.timezone.utc)

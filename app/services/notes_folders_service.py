@@ -1,4 +1,3 @@
-from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.const.notes import NotesFolderType
@@ -8,7 +7,6 @@ from app.services.base_service import BaseService
 
 
 class NotesFolderService(BaseService[NotesFolder]):
-    IMPORT_FOLDER_DATE_FORMAT = '%Y-%m-%d'
     model = NotesFolder
 
     @classmethod
@@ -122,29 +120,3 @@ class NotesFolderService(BaseService[NotesFolder]):
                 return True
             folder2 = folder2.parent
         return False
-
-    @classmethod
-    def create_import_folder(cls, db: Session, user_id: int) -> NotesFolder:
-        """ Create a new folder for import with a unique name. """
-        current_date = datetime.now().strftime(cls.IMPORT_FOLDER_DATE_FORMAT)
-        base_name = f'import_{current_date}'
-        
-        # fetch folders that start with base_name and get a unique name for the new folder
-        existing_folders = cls.get_base_query(db).filter(
-            NotesFolder.user_id == user_id,
-            NotesFolder.name.startswith(base_name)
-        ).all()
-        existing_names = {f.name for f in existing_folders}
-        
-        folder_name = base_name
-        index = 1
-        while folder_name in existing_names:
-            folder_name = f'{base_name}_{index}'
-            index += 1
-            
-        root_folder = cls.get_root_folder(db, user_id)
-        return cls.create_folder(
-            db,
-            user_id,
-            NotesFolderCreateSchema(name=folder_name, parent_id=root_folder.id)
-        )

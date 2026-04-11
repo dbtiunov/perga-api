@@ -35,7 +35,8 @@ async def import_notes(
         if not target_folder:
             raise HTTPException(status_code=404, detail='Folder not found')
     else:
-        target_folder = NotesFolderService.create_import_folder(db, current_user.id)
+        # use root folder for import if no folder_id is provided
+        target_folder = NotesFolderService.get_root_folder(db, current_user.id)
     folder_id = target_folder.id
 
     # process files

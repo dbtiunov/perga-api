@@ -28,7 +28,7 @@ class TestNotesExportImportRoundTrip:
         )
         
         # 3. Import the content back
-        import_folder = NotesFolderService.create_import_folder(test_db, test_user.id)
+        import_folder = NotesFolderService.get_root_folder(test_db, test_user.id)
         imported_note = NotesImportService.import_file(
             test_db,
             test_user.id,
@@ -62,7 +62,7 @@ class TestNotesExportImportRoundTrip:
         )
         
         # 3. Import the content back
-        import_folder = NotesFolderService.create_import_folder(test_db, test_user.id)
+        import_folder = NotesFolderService.get_root_folder(test_db, test_user.id)
         imported_note = NotesImportService.import_file(
             test_db,
             test_user.id,
@@ -97,7 +97,7 @@ class TestNotesExportImportRoundTrip:
         )
         
         # 3. Import the content back
-        import_folder = NotesFolderService.create_import_folder(test_db, test_user.id)
+        import_folder = NotesFolderService.get_root_folder(test_db, test_user.id)
         imported_note = NotesImportService.import_file(
             test_db, test_user.id, filename, content.encode('utf-8'), import_folder.id
         )
@@ -130,7 +130,7 @@ class TestNotesExportImportRoundTrip:
         )
         
         # 3. Import the content back
-        import_folder = NotesFolderService.create_import_folder(test_db, test_user.id)
+        import_folder = NotesFolderService.get_root_folder(test_db, test_user.id)
         imported_note = NotesImportService.import_file(
             test_db, test_user.id, filename, content.encode('utf-8'), import_folder.id
         )
@@ -161,7 +161,7 @@ class TestNotesExportImportRoundTrip:
         )
         
         # 3. Import back
-        import_folder = NotesFolderService.create_import_folder(test_db, test_user.id)
+        import_folder = NotesFolderService.get_root_folder(test_db, test_user.id)
         imported_note = NotesImportService.import_file(
             test_db, test_user.id, 'test.md', content.encode('utf-8'), import_folder.id
         )
@@ -191,7 +191,7 @@ class TestNotesExportImportRoundTrip:
         )
         
         # 3. Import
-        import_folder = NotesFolderService.create_import_folder(test_db, test_user.id)
+        import_folder = NotesFolderService.get_root_folder(test_db, test_user.id)
         imported_note = NotesImportService.import_file(
             test_db, test_user.id, 'test.md', content.encode('utf-8'), import_folder.id
         )
@@ -220,7 +220,7 @@ class TestNotesExportImportRoundTrip:
         )
         
         # 3. Import the content back
-        import_folder = NotesFolderService.create_import_folder(test_db, test_user.id)
+        import_folder = NotesFolderService.get_root_folder(test_db, test_user.id)
         imported_note = NotesImportService.import_file(
             test_db,
             test_user.id,
@@ -260,7 +260,7 @@ class TestNotesExportImportRoundTrip:
         )
         
         # 3. Import the ZIP back
-        import_root = NotesFolderService.create_import_folder(test_db, test_user.id)
+        import_root = NotesFolderService.get_root_folder(test_db, test_user.id)
         imported_notes = NotesImportService.import_zip(
             test_db, test_user.id, zip_buffer.getvalue(), import_root.id
         )
@@ -298,7 +298,7 @@ class TestNotesExportImportRoundTrip:
         zip_buffer, _ = NotesExportService.export_folder(test_db, test_user.id, folder.id, ExportType.HTML)
 
         # 3. Import back
-        import_root = NotesFolderService.create_import_folder(test_db, test_user.id)
+        import_root = NotesFolderService.get_root_folder(test_db, test_user.id)
         imported_notes = NotesImportService.import_zip(test_db, test_user.id, zip_buffer.getvalue(), import_root.id)
 
         # 4. Verify
@@ -328,7 +328,7 @@ class TestNotesExportImportRoundTrip:
         assert '*' not in filename
 
         # 3. Import back
-        import_folder = NotesFolderService.create_import_folder(test_db, test_user.id)
+        import_folder = NotesFolderService.get_root_folder(test_db, test_user.id)
         imported_note = NotesImportService.import_file(
             test_db,
             test_user.id,

@@ -1,6 +1,5 @@
 import io
 import zipfile
-from datetime import datetime
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -21,16 +20,11 @@ class TestNotesImport:
         data = response.json()
         assert data['imported_count'] == 2
         
-        # Check that a new import folder was created
-        current_date = datetime.now().strftime(NotesFolderService.IMPORT_FOLDER_DATE_FORMAT)
-        folder = NotesFolderService.get_base_query(test_db).filter_by(
-            name=f'import_{current_date}',
-            user_id=test_user.id
-        ).first()
-        assert folder is not None
+        # Check that the notes were created in the root folder
+        root_folder = NotesFolderService.get_root_folder(test_db, test_user.id)
         
         # Check that notes were created in the database
-        notes = test_db.query(Note).filter_by(folder_id=folder.id).all()
+        notes = test_db.query(Note).filter_by(folder_id=root_folder.id).all()
         assert len(notes) == 2
         
         titles = [note.title for note in notes]
@@ -53,19 +47,10 @@ class TestNotesImport:
             headers=auth_headers
         )
         
-        current_date = datetime.now().strftime(NotesFolderService.IMPORT_FOLDER_DATE_FORMAT)
-        folder1 = NotesFolderService.get_base_query(test_db).filter_by(
-            name=f'import_{current_date}',
-            user_id=test_user.id
-        ).first()
-        folder2 = NotesFolderService.get_base_query(test_db).filter_by(
-            name=f'import_{current_date}_1',
-            user_id=test_user.id
-        ).first()
-        
-        assert folder1 is not None
-        assert folder2 is not None
-        assert folder1.id != folder2.id
+        # Check that both notes are in the root folder
+        root_folder = NotesFolderService.get_root_folder(test_db, test_user.id)
+        notes = test_db.query(Note).filter_by(folder_id=root_folder.id).all()
+        assert len(notes) == 2
 
     def test_import_zip(self, client: TestClient, auth_headers: dict):
         zip_buffer = io.BytesIO()
