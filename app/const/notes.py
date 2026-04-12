@@ -34,3 +34,26 @@ EXPORT_MEDIA_TYPE_MAP = {
 
 IMPORT_SIZE_LIMIT_MB = 10
 IMPORT_SIZE_LIMIT = IMPORT_SIZE_LIMIT_MB * 1024 * 1024
+
+# HTML sanitization settings
+NOTE_BODY_ALLOWED_TAGS = {
+    'p', 'br',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'strong', 'b', 'em', 'i', 'u', 's',
+    'sub', 'sup',
+    'ul', 'ol', 'li',
+    'blockquote', 'code', 'pre', 'hr',
+    'a', 'img',
+    'table', 'thead', 'tbody', 'tr', 'th', 'td',
+    'details', 'summary',
+}
+NOTE_BODY_ALLOWED_ATTRIBUTES = {
+    'a': {'href', 'target', 'title'},
+    'img': {'src', 'alt', 'title', 'width', 'height'},
+    'ol': {'start', 'type'},
+    'ul': {'data-type'},
+    'li': {'data-type'},
+    'td': {'colspan', 'rowspan'},
+    'th': {'colspan', 'rowspan'},
+}
+NOTE_BODY_ALLOWED_PROTOCOLS = {'http', 'https', 'mailto'}
