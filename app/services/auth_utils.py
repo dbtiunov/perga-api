@@ -1,74 +1,78 @@
-from datetime import datetime, timedelta, timezone
-
+import bcrypt
+import datetime as dt
 from jose import jwt
-from passlib import exc as passlib_exc
-from passlib.context import CryptContext
 
+from app.const.auth import SIGNING_ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS, TokenType
 from app.core.config import settings
 
-# Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# JWT settings
-SECRET_KEY = settings.SECRET_KEY
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
-REFRESH_TOKEN_EXPIRE_DAYS = 30
+def generate_password_hash(plain_password: str) -> str:
+    """
+    Hashes password using bcrypt:
+    1. Converts plain password to bytes
+    2. Generates salt
+    3. Hashes password with salt
+    4. Returns hashed bytes as string
+    """
+    password_bytes = plain_password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(password_bytes, salt)
+    return hashed_password.decode('utf-8')
 
 
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
+def validate_password(plain_password: str, hashed_password: str) -> bool:
+    """ Verifies a plain password against a hashed password """
     try:
-        result = pwd_context.verify(plain_password, hashed_password)
-    except passlib_exc.UnknownHashError:
-        # Handle case when hash format cannot be identified
+        password_bytes = plain_password.encode('utf-8')
+        hashed_bytes = hashed_password.encode('utf-8')
+    except UnicodeEncodeError:
+        return False
+
+    try:
+        result = bcrypt.checkpw(password_bytes, hashed_bytes)
+    except ValueError:
+        # invalid bcrypt hash format
         result = False
 
     return result
 
 
-def create_token(data: dict, expires_delta: timedelta | None = None, token_type: str = "access") -> str:
+def create_token(
+    data: dict,
+    custom_timeout: dt.timedelta | None = None,
+    token_type: TokenType = TokenType.ACCESS
+) -> str:
     """
-    Create a JWT token (access or refresh)
+    Creates a JWT token with expiration timeout based on token_type or custom_timeout.
 
-    Args:
-        data: Data to encode in the token
-        expires_delta: Optional custom expiration time
-        token_type: Type of token ("access" or "refresh")
-
-    Returns:
-        Encoded JWT token
+    Payload contains the following keys:
+    - 'sub' (Subject): user_id, stored as a string.
+    - 'exp' (Expiration Time): time after which the token is invalid.
+    - 'token_type': The type of token, 'access' or 'refresh'.
     """
     to_encode = data.copy()
 
-    # Ensure 'sub' is a string if present
     if to_encode.get('sub'):
-        to_encode["sub"] = str(to_encode["sub"])
+        to_encode['sub'] = str(to_encode['sub'])
 
-    to_encode["token_type"] = token_type
+    to_encode['token_type'] = token_type
 
-    # Set expiration based on token type
-    if expires_delta:
-        expire_dt = datetime.now(timezone.utc) + expires_delta
-    elif token_type == "refresh":
-        expire_dt = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    else:  # access token by default
-        expire_dt = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-
+    now = dt.datetime.now(dt.timezone.utc)
+    if custom_timeout:
+        expire_dt = now + custom_timeout
+    elif token_type == TokenType.REFRESH:
+        expire_dt = now + dt.timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    else:
+        expire_dt = now + dt.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode['exp'] = expire_dt
 
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=SIGNING_ALGORITHM)
     return encoded_jwt
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
-    """ Create an access token with default expiration of ACCESS_TOKEN_EXPIRE_MINUTES """
-    return create_token(data, expires_delta, token_type="access")
+def create_access_token(data: dict, custom_timeout: dt.timedelta | None = None) -> str:
+    return create_token(data, custom_timeout=custom_timeout, token_type=TokenType.ACCESS)
 
 
-def create_refresh_token(data: dict, expires_delta: timedelta | None = None) -> str:
-    """ Create a refresh token with default expiration of REFRESH_TOKEN_EXPIRE_DAYS """
-    return create_token(data, expires_delta, token_type="refresh")
+def create_refresh_token(data: dict, custom_timeout: dt.timedelta | None = None) -> str:
+    return create_token(data, custom_timeout=custom_timeout, token_type=TokenType.REFRESH)

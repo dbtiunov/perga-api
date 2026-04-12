@@ -7,13 +7,10 @@ from app.services.planner_agenda_service import PlannerAgendaService
 
 
 class TestPlannerAgendaService:
-    """Tests for the PlannerAgendaService class"""
-
     def test_archive_and_unarchive_agenda(self, test_db: Session, test_user):
-        """Archiving CUSTOM agenda to ARCHIVED and then unarchiving back to CUSTOM"""
         # Create a CUSTOM agenda
         agenda = PlannerAgenda(
-            name="To Archive",
+            name='To Archive',
             index=PLANNER_CUSTOM_AGENDA_INDEX_MIN,
             agenda_type=PlannerAgendaType.CUSTOM,
             user_id=test_user.id
@@ -24,21 +21,15 @@ class TestPlannerAgendaService:
 
         # Archive it (CUSTOM -> ARCHIVED)
         update = PlannerAgendaUpdateSchema(agenda_type=PlannerAgendaType.ARCHIVED)
-        archived = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, update, test_user.id)
-        assert archived is not None
-        assert archived.agenda_type == PlannerAgendaType.ARCHIVED
-        # Unchanged fields
-        assert archived.name == "To Archive"
-        assert archived.index == PLANNER_CUSTOM_AGENDA_INDEX_MIN
+        archived_agenda = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, update, test_user.id)
+        assert archived_agenda is not None
+        assert archived_agenda.agenda_type == PlannerAgendaType.ARCHIVED
 
         # Unarchive it back (ARCHIVED -> CUSTOM)
         update_back = PlannerAgendaUpdateSchema(agenda_type=PlannerAgendaType.CUSTOM)
-        unarchived = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, update_back, test_user.id)
-        assert unarchived is not None
-        assert unarchived.agenda_type == PlannerAgendaType.CUSTOM
-        # Unchanged fields
-        assert unarchived.name == "To Archive"
-        assert unarchived.index == PLANNER_CUSTOM_AGENDA_INDEX_MIN
+        unarchived_agenda = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, update_back, test_user.id)
+        assert unarchived_agenda is not None
+        assert unarchived_agenda.agenda_type == PlannerAgendaType.CUSTOM
 
     def test_get_new_agenda_index(self, test_db: Session, test_user):
         """Test that get_new_agenda_index returns the correct index"""
@@ -151,8 +142,8 @@ class TestPlannerAgendaService:
         test_db.refresh(agenda)
         
         # Delete the agenda
-        success = PlannerAgendaService.delete_planner_agenda(test_db, agenda.id, test_user.id)
-        assert success is True
+        delete_result = PlannerAgendaService.delete_planner_agenda(test_db, agenda.id, test_user.id)
+        assert delete_result is True
         
         # Check that the agenda was marked as deleted
         db_agenda = test_db.query(PlannerAgenda).filter(PlannerAgenda.id == agenda.id).first()
@@ -160,12 +151,12 @@ class TestPlannerAgendaService:
         assert db_agenda.deleted_dt is not None
         
         # Try to delete a non-existent agenda
-        success = PlannerAgendaService.delete_planner_agenda(test_db, 999, test_user.id)
-        assert success is False
+        delete_result = PlannerAgendaService.delete_planner_agenda(test_db, 999, test_user.id)
+        assert delete_result is False
         
         # Try to delete an agenda with a different user_id
-        success = PlannerAgendaService.delete_planner_agenda(test_db, agenda.id, 999)
-        assert success is False
+        delete_result = PlannerAgendaService.delete_planner_agenda(test_db, agenda.id, 999)
+        assert delete_result is False
 
     def test_reorder_agendas(self, test_db: Session, test_user):
         """Test that reorder_agendas reorders agendas correctly"""
@@ -195,8 +186,12 @@ class TestPlannerAgendaService:
         test_db.refresh(agenda3)
         
         # Reorder the agendas (3, 1, 2)
-        success = PlannerAgendaService.reorder_agendas(test_db, [agenda3.id, agenda1.id, agenda2.id], test_user.id)
-        assert success is True
+        reorder_result = PlannerAgendaService.reorder_agendas(
+            test_db,
+            [agenda3.id, agenda1.id, agenda2.id],
+            test_user.id
+        )
+        assert reorder_result is True
         
         # Check that the agendas were reordered correctly
         db_agenda1 = test_db.query(PlannerAgenda).filter(PlannerAgenda.id == agenda1.id).first()

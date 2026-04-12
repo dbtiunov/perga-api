@@ -47,7 +47,7 @@ class TestNotesImportService:
 
     def test_import_single_file(self, test_db: Session, test_user):
         content = b'# Note from file\nBody'
-        folder = NotesFolderService.create_import_folder(test_db, test_user.id)
+        folder = NotesFolderService.get_root_folder(test_db, test_user.id)
         note = NotesImportService.import_file(test_db, test_user.id, 'test.md', content, folder.id)
         assert note is not None
         assert note.title == 'Note from file'
@@ -66,9 +66,8 @@ class TestNotesImportService:
             )
 
         zip_content = zip_buffer.getvalue()
-        root_folder = NotesFolderService.create_import_folder(test_db, test_user.id)
+        root_folder = NotesFolderService.get_root_folder(test_db, test_user.id)
         notes = NotesImportService.import_zip(test_db, test_user.id, zip_content, root_folder.id)
-        
         assert len(notes) == 3
         
         # Check note 1 (root)

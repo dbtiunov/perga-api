@@ -8,6 +8,7 @@ class UserSchema(BaseModel):
     username: str
     email: str
     week_start_day: WeekStartDay
+    merge_weekends: bool
 
     class Config:
         from_attributes = True
@@ -17,13 +18,15 @@ class UserCreateSchema(BaseModel):
     username: str
     email: str
     password: str
-    week_start_day: WeekStartDay = WeekStartDay.SUNDAY
+    week_start_day: WeekStartDay = WeekStartDay.MONDAY
+    merge_weekends: bool = False
 
 
 class UserUpdateSchema(BaseModel):
     username: str | None = None
     email: str | None = None
     week_start_day: WeekStartDay | None = None
+    merge_weekends: bool | None = None
 
 
 class PasswordChangeSchema(BaseModel):

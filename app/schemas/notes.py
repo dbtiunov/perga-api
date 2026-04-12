@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime as dt
 from pydantic import BaseModel
 
 
@@ -19,7 +19,7 @@ class NoteMetaSchema(BaseModel):
     id: int
     folder_id: int
     title: str
-    updated_dt: datetime
+    updated_dt: dt.datetime
 
     class Config:
         from_attributes = True

@@ -1,11 +1,11 @@
+import datetime as dt
 import logging
-from datetime import datetime, date, timezone
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import func, case
 from sqlalchemy.orm import Session
 
 from app.const.planner import (
-    PlannerAgendaType, PlannerItemState, PLANNER_CUSTOM_AGENDA_INDEX_MIN, PLANNER_MONTHLY_AGENDA_INDEX
+    PlannerAgendaType, PlannerItemState, PLANNER_CUSTOM_AGENDA_INDEX_MIN, PLANNER_MONTHLY_AGENDA_INDEX,
 )
 from app.core.db_utils import atomic_transaction, TransactionRollback
 from app.models.planner import PlannerAgenda, PlannerAgendaItem
@@ -20,7 +20,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
 
     @classmethod
     def get_agendas(
-        cls, db: Session, user_id: int, agenda_types: list[PlannerAgendaType], selected_day: date | None = None,
+        cls, db: Session, user_id: int, agenda_types: list[PlannerAgendaType], selected_day: dt.date | None = None,
         with_counts: bool = False
     ) -> list[PlannerAgenda]:
         """
@@ -34,10 +34,10 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
 
         if PlannerAgendaType.MONTHLY in agenda_types:
             if not selected_day:
-                selected_day = datetime.today()
+                selected_day = dt.datetime.today()
 
-            selected_month_name = selected_day.strftime("%B %Y")
-            next_month_name = (selected_day.replace(day=1) + relativedelta(months=1)).strftime("%B %Y")
+            selected_month_name = selected_day.strftime('%B %Y')
+            next_month_name = (selected_day.replace(day=1) + relativedelta(months=1)).strftime('%B %Y')
             month_names = [selected_month_name, next_month_name]
             month_agendas = base_query.filter(
                 PlannerAgenda.agenda_type == PlannerAgendaType.MONTHLY.value,
@@ -150,7 +150,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
                     PlannerAgendaItem.agenda_id == agenda_id
                 ).update({
                     'is_deleted': True,
-                    'deleted_dt': datetime.now(timezone.utc),
+                    'deleted_dt': dt.datetime.now(dt.timezone.utc),
                 })
                 db_agenda.mark_as_deleted()
         except TransactionRollback as e:

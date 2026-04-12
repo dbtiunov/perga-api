@@ -34,7 +34,7 @@ class PlannerAgenda(BaseModel):
 class BasePlannerItem(BaseModel):
     __abstract__ = True
 
-    text = Column(String(length=64))
+    text = Column(String(length=256))
     index = Column(Integer, default=0)
     state = Column(String(length=32), nullable=False, default=PlannerItemState.TODO)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)

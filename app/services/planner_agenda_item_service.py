@@ -1,5 +1,5 @@
+import datetime as dt
 import logging
-from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.const.planner import PlannerItemState
@@ -151,8 +151,8 @@ class PlannerAgendaItemService(BaseService[PlannerAgendaItem]):
                 PlannerItemState.COMPLETED, PlannerItemState.DROPPED, PlannerItemState.SNOOZED
             ])
         ).update({
-            "is_deleted": True,
-            "deleted_dt": datetime.now(timezone.utc),
+            'is_deleted': True,
+            'deleted_dt': dt.datetime.now(dt.timezone.utc),
         }, synchronize_session=False)
         db.commit()
         return True

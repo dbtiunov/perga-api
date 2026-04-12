@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Column, String, Boolean, true, false
 from sqlalchemy.orm import relationship
 
 from app.const.planner import WeekStartDay
@@ -16,8 +16,11 @@ class User(BaseModel):
     username = Column(String(length=64), unique=True, index=True, nullable=False)
     email = Column(String(length=64), unique=True, index=True, nullable=False)
     hashed_password = Column(String(length=128), nullable=False)
-    is_active = Column(Boolean, default=True)
-    week_start_day = Column(String(length=32), default=WeekStartDay.SUNDAY, nullable=False)
+    is_active = Column(Boolean, default=True, server_default=true(), nullable=False)
+
+    # Preferences
+    week_start_day = Column(String(length=32), default=WeekStartDay.MONDAY, nullable=False)
+    merge_weekends = Column(Boolean, default=False, server_default=false(), nullable=False)
 
     # Relationships
     planner_agendas = relationship("PlannerAgenda", back_populates="user")

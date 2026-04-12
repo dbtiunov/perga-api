@@ -4,9 +4,9 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Perga API"
-    VERSION: str = "1.0.0"
-    API_V1_STR: str = "/api/v1"
+    PROJECT_NAME: str = 'Perga API'
+    VERSION: str = '1.0.0'
+    API_V1_STR: str = '/api/v1'
     
     SECRET_KEY: str
     CORS_ORIGINS: list[str]
@@ -25,7 +25,7 @@ class Settings(BaseSettings):
         return f'postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}/{self.POSTGRES_DB}'
 
     class Config:
-        env_file = ".env"
+        env_file = '.env'
         case_sensitive = True
         cache_enabled = False
 
