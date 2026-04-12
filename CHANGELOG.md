@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.3] - 2026-04-12
+
+### Added
+
+- Added User.merge_weekends field
+- Added get_items_by_range planner API method
+
+### Changed
+
+- Increased planner item text length
+- Added sanitization for note body HTML
+- Updated requirements
+- Updated auth requirements and code
+- Updated tests
+
 ## [1.1.2] - 2026-03-24
 
 ### Added
