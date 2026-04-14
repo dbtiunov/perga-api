@@ -4,7 +4,7 @@
 ![Python](https://img.shields.io/badge/python-3.10-blue.svg)
 ![Build](https://github.com/dbtiunov/perga-api/actions/workflows/ci.yml/badge.svg)
 
-Personal organizer that helps you plan and organize your days and months efficiently.
+Personal organizer that helps you plan and organize your days and keep notes.
 
 ## Overview
 
@@ -15,14 +15,17 @@ Personal organizer that helps you plan and organize your days and months efficie
 
 - Daily planner
 - Monthly and custom agendas
+- Notes
 - RESTful API with FastAPI
 - User authentication with JWT tokens
-- Comprehensive documentation with Swagger UI
+- API Documentation with Swagger UI
 
 <p>
-  <img src="docs/assets/api_screenshot.png" alt="API Screenshot" width="300" />
+  <img src="docs/assets/api_screenshot.png" alt="Perga API" width="300" />
   <span>&nbsp;&nbsp;&nbsp;</span>
-  <img src="docs/assets/planner_screenshot.png" alt="Planner Screenshot" width="300" />
+  <img src="docs/assets/planner_screenshot.png" alt="Planner" width="300" />
+  <span>&nbsp;&nbsp;&nbsp;</span>
+  <img src="docs/assets/notes_screenshot.png" alt="Notes" width="300" />
 </p>
 
 ## Demo
