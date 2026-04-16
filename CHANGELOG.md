@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.5] - 2026-04-15
+
+### Fixed
+
+- Fixed planner agenda items counts
+
 ## [1.1.4] - 2026-04-14
 
 ### Added

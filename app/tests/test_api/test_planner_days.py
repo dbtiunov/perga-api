@@ -13,7 +13,7 @@ class TestPlannerDayAPI:
         for date in dates:
             PlannerDayItemService.create_day_item(
                 test_db,
-                item=PlannerDayItemCreateSchema(day=date, text=f'Task for {date}'),
+                item=PlannerDayItemCreateSchema(day=date, text=f'Item for {date}'),
                 user_id=test_user.id
             )
             
@@ -33,4 +33,4 @@ class TestPlannerDayAPI:
         assert '2026-02-05' not in data
         
         assert len(data['2026-02-02']) == 1
-        assert data['2026-02-02'][0]['text'] == 'Task for 2026-02-02'
+        assert data['2026-02-02'][0]['text'] == 'Item for 2026-02-02'

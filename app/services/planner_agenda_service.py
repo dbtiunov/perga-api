@@ -67,32 +67,39 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
             archived_agendas = base_query.filter(PlannerAgenda.agenda_type == PlannerAgendaType.ARCHIVED).all()
             result_agendas.extend(archived_agendas)
 
-        # Enrich agendas with counts of items per state
+        # Add items counts to each agenda
         if result_agendas and with_counts:
-            agenda_ids = [agenda.id for agenda in result_agendas]
-
-            items_cnt_query = db.query(
-                PlannerAgendaItem.agenda_id,
-                func.sum(
-                    case((PlannerAgendaItem.state == PlannerItemState.TODO, 1), else_=0)
-                ).label('todo_cnt'),
-                func.sum(
-                    case((PlannerAgendaItem.state == PlannerItemState.COMPLETED, 1), else_=0)
-                ).label('completed_cnt'),
-            ).filter(
-                PlannerAgendaItem.agenda_id.in_(agenda_ids),
-            ).group_by(PlannerAgendaItem.agenda_id).all()
-            items_cnt_map = {
-                row.agenda_id: (int(row.todo_cnt or 0), int(row.completed_cnt or 0)) for row in items_cnt_query
-            }
-            for agenda in result_agendas:
-                todo_cnt, completed_cnt = items_cnt_map.get(agenda.id, (0, 0))
-
-                # attach as dynamic attributes so Pydantic can serialize them via from_attributes
-                setattr(agenda, 'todo_items_cnt', todo_cnt)
-                setattr(agenda, 'completed_items_cnt', completed_cnt)
+            cls._calc_items_counts(db, result_agendas)
 
         return result_agendas
+
+    @classmethod
+    def _calc_items_counts(cls, db: Session, agendas: list[PlannerAgenda]) -> None:
+        if not agendas:
+            return
+
+        agenda_ids = [agenda.id for agenda in agendas]
+
+        items_cnt_query = db.query(
+            PlannerAgendaItem.agenda_id,
+            func.sum(
+                case((PlannerAgendaItem.state == PlannerItemState.TODO, 1), else_=0)
+            ).label('todo_cnt'),
+            func.sum(
+                case((PlannerAgendaItem.state == PlannerItemState.COMPLETED, 1), else_=0)
+            ).label('completed_cnt'),
+        ).filter(
+            PlannerAgendaItem.agenda_id.in_(agenda_ids),
+            PlannerAgendaItem.is_deleted.is_(False)
+        ).group_by(PlannerAgendaItem.agenda_id).all()
+
+        items_cnt_map = {
+            row.agenda_id: (int(row.todo_cnt or 0), int(row.completed_cnt or 0)) for row in items_cnt_query
+        }
+        for agenda in agendas:
+            todo_items_cnt, completed_items_cnt = items_cnt_map.get(agenda.id, (0, 0))
+            setattr(agenda, 'todo_items_cnt', todo_items_cnt)
+            setattr(agenda, 'completed_items_cnt', completed_items_cnt)
 
     @classmethod
     def get_new_agenda_index(cls, db: Session, user_id) -> int:
@@ -134,6 +141,7 @@ class PlannerAgendaService(BaseService[PlannerAgenda]):
         db.commit()
 
         db.refresh(db_agenda)
+        cls._calc_items_counts(db, [db_agenda])
         return db_agenda
 
     @classmethod

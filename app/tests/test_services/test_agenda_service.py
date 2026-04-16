@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from app.const.planner import PlannerAgendaType, PLANNER_CUSTOM_AGENDA_INDEX_MIN
-from app.models.planner import PlannerAgenda
+from app.const.planner import PlannerAgendaType, PlannerItemState, PLANNER_CUSTOM_AGENDA_INDEX_MIN
+from app.models.planner import PlannerAgenda, PlannerAgendaItem
 from app.schemas.planner_agenda import PlannerAgendaCreateSchema, PlannerAgendaUpdateSchema
 from app.services.planner_agenda_service import PlannerAgendaService
 
@@ -32,14 +32,13 @@ class TestPlannerAgendaService:
         assert unarchived_agenda.agenda_type == PlannerAgendaType.CUSTOM
 
     def test_get_new_agenda_index(self, test_db: Session, test_user):
-        """Test that get_new_agenda_index returns the correct index"""
         # When there are no agendas, index should be 1
         index = PlannerAgendaService.get_new_agenda_index(test_db, test_user.id)
         assert index == PLANNER_CUSTOM_AGENDA_INDEX_MIN
 
         # Create an agenda with index 1
         agenda = PlannerAgenda(
-            name="Test Agenda",
+            name='Test Agenda',
             index=index,
             agenda_type=PlannerAgendaType.CUSTOM,
             user_id=test_user.id
@@ -52,10 +51,9 @@ class TestPlannerAgendaService:
         assert index == 2
 
     def test_get_planner_agenda(self, test_db: Session, test_user):
-        """Test that get_planner_agenda returns the correct agenda"""
         # Create an agenda
         agenda = PlannerAgenda(
-            name="Test Agenda",
+            name='Test Agenda',
             index=PLANNER_CUSTOM_AGENDA_INDEX_MIN,
             agenda_type=PlannerAgendaType.CUSTOM,
             user_id=test_user.id
@@ -68,7 +66,7 @@ class TestPlannerAgendaService:
         db_agenda = PlannerAgendaService.get_planner_agenda(test_db, agenda.id, test_user.id)
         assert db_agenda is not None
         assert db_agenda.id == agenda.id
-        assert db_agenda.name == "Test Agenda"
+        assert db_agenda.name == 'Test Agenda'
         assert db_agenda.agenda_type == PlannerAgendaType.CUSTOM
 
         # Try to get a non-existent agenda
@@ -80,10 +78,9 @@ class TestPlannerAgendaService:
         assert db_agenda is None
 
     def test_create_planner_agenda(self, test_db: Session, test_user):
-        """Test that create_planner_agenda creates an agenda correctly"""
         # Create an agenda
         agenda_create = PlannerAgendaCreateSchema(
-            name="Test Agenda",
+            name='Test Agenda',
             agenda_type=PlannerAgendaType.CUSTOM,
             index=None  # Should be set automatically
         )
@@ -91,16 +88,15 @@ class TestPlannerAgendaService:
         
         # Check that the agenda was created correctly
         assert db_agenda.id is not None
-        assert db_agenda.name == "Test Agenda"
+        assert db_agenda.name == 'Test Agenda'
         assert db_agenda.agenda_type == PlannerAgendaType.CUSTOM
         assert db_agenda.index == PLANNER_CUSTOM_AGENDA_INDEX_MIN
         assert db_agenda.user_id == test_user.id
 
     def test_update_planner_agenda(self, test_db: Session, test_user):
-        """Test that update_planner_agenda updates an agenda correctly"""
         # Create an agenda
         agenda = PlannerAgenda(
-            name="Test Agenda",
+            name='Test Agenda',
             index=PLANNER_CUSTOM_AGENDA_INDEX_MIN,
             agenda_type=PlannerAgendaType.CUSTOM,
             user_id=test_user.id
@@ -111,13 +107,13 @@ class TestPlannerAgendaService:
         
         # Update the agenda
         agenda_update = PlannerAgendaUpdateSchema(
-            name="Updated Agenda"
+            name='Updated Agenda'
         )
         db_agenda = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, agenda_update, test_user.id)
         
         # Check that the agenda was updated correctly
         assert db_agenda.id == agenda.id
-        assert db_agenda.name == "Updated Agenda"
+        assert db_agenda.name == 'Updated Agenda'
         assert db_agenda.agenda_type == PlannerAgendaType.CUSTOM  # Unchanged
         
         # Try to update a non-existent agenda
@@ -129,10 +125,9 @@ class TestPlannerAgendaService:
         assert db_agenda is None
 
     def test_delete_planner_agenda(self, test_db: Session, test_user):
-        """Test that delete_planner_agenda deletes an agenda correctly"""
         # Create an agenda
         agenda = PlannerAgenda(
-            name="Test Agenda",
+            name='Test Agenda',
             index=PLANNER_CUSTOM_AGENDA_INDEX_MIN,
             agenda_type=PlannerAgendaType.CUSTOM,
             user_id=test_user.id
@@ -157,6 +152,42 @@ class TestPlannerAgendaService:
         # Try to delete an agenda with a different user_id
         delete_result = PlannerAgendaService.delete_planner_agenda(test_db, agenda.id, 999)
         assert delete_result is False
+
+    def test_update_planner_agenda_with_counts(self, test_db: Session, test_user):
+        # Create an agenda
+        agenda = PlannerAgenda(
+            name='Test Agenda',
+            index=PLANNER_CUSTOM_AGENDA_INDEX_MIN,
+            agenda_type=PlannerAgendaType.CUSTOM,
+            user_id=test_user.id
+        )
+        test_db.add(agenda)
+        test_db.commit()
+        test_db.refresh(agenda)
+
+        # Add some items to the agenda
+        item1 = PlannerAgendaItem(
+            text='Item 1',
+            state=PlannerItemState.TODO,
+            agenda_id=agenda.id,
+            user_id=test_user.id
+        )
+        item2 = PlannerAgendaItem(
+            text='Item 2',
+            state=PlannerItemState.COMPLETED,
+            agenda_id=agenda.id,
+            user_id=test_user.id
+        )
+        test_db.add_all([item1, item2])
+        test_db.commit()
+
+        # Update the agenda
+        agenda_update = PlannerAgendaUpdateSchema(name='Updated Agenda')
+        db_agenda = PlannerAgendaService.update_planner_agenda(test_db, agenda.id, agenda_update, test_user.id)
+
+        assert db_agenda.name == 'Updated Agenda'
+        assert getattr(db_agenda, 'todo_items_cnt', 0) == 1
+        assert getattr(db_agenda, 'completed_items_cnt', 0) == 1
 
     def test_reorder_agendas(self, test_db: Session, test_user):
         """Test that reorder_agendas reorders agendas correctly"""
