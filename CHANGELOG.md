@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.0] - 2026-07-26
+
+### Added
+
+- Note.search_vector field for full-text search
+- Notes search schemas, services and API
+
+### Changed
+
+- Use postgres for tests instead of sqlite
+
 ## [1.1.10] - 2026-07-14
 
 ### Changed

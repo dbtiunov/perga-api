@@ -112,6 +112,30 @@ class NotesFolderService(BaseService[NotesFolder]):
         db.commit()
 
     @classmethod
+    def get_folders_path_map(cls, db: Session, user_id: int) -> dict[int, list[str]]:
+        """ Builds a map folder_id -> breadcrumb path names, e.g. {5: ['Folder1', 'Subfolder'], 6: ['Trash']} """
+        user_folders = cls.get_base_query(db).filter(NotesFolder.user_id == user_id)
+        folders_id_map: dict[int, NotesFolder]  = {folder.id: folder for folder in user_folders}
+        folders_path_map: dict[int, list[str]] = {}
+
+        def _get_path_names(folder: NotesFolder) -> list[str]:
+            """ Returns a list of folder names from the root to the given folder """
+            if folder.folder_type == NotesFolderType.ROOT:
+                return []
+            if folder.folder_type == NotesFolderType.TRASH:
+                return ['Trash']
+
+            parent: NotesFolder | None = folders_id_map.get(folder.parent_id)
+            names = _get_path_names(parent) if parent else []
+            names.append(folder.name)
+            return names
+
+        for folder in folders_id_map.values():
+            folders_path_map[folder.id] = _get_path_names(folder)
+
+        return folders_path_map
+
+    @classmethod
     def is_subfolder_of(cls, db: Session, folder1_id: int, folder2_id: int, user_id: int) -> bool:
         """ Check if folder2_id is a subfolder of folder1_id """
         folder2 = cls.get_folder(db, folder2_id, user_id)
