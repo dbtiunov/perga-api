@@ -30,3 +30,10 @@ class NoteSchema(NoteMetaSchema):
 
     class Config:
         from_attributes = True
+
+
+class NoteSearchResultSchema(NoteMetaSchema):
+    folders_path: list[str] = []
+
+    class Config:
+        from_attributes = True

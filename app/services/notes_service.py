@@ -52,9 +52,15 @@ class NoteService(BaseService[Note]):
             Note.user_id == user_id,
             Note.search_vector.op('@@')(ts_query)
         )
-        return filtered_query.order_by(
+        notes = filtered_query.order_by(
             func.ts_rank(Note.search_vector, ts_query).desc()
         ).limit(limit).all()
+
+        folder_paths = NotesFolderService.get_folders_path_map(db, user_id)
+        for note in notes:
+            note.folders_path = folder_paths.get(note.folder_id, [])
+
+        return notes
 
     @classmethod
     def create_note(cls, db: Session, user_id: int, create_data: NoteCreateSchema) -> Note:
